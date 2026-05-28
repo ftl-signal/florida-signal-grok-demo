@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://florida-signal.local/adapter-test-contract-v0.2.schema.json",
+  "title": "Florida Signal Adapter Test Contract v0.2 (Mock Harness)",
+  "description": "Strict contract that every source adapter (mock or future live) must satisfy before promotion. All fields are required for a passing mock run. Sandbox only - no live execution allowed.",
+  "type": "object",
+  "required": [
+    "run_id", "source_name", "adapter_type", "mode", "started_at", "finished_at",
+    "status", "records_fetched", "records_parsed", "records_rejected",
+    "errors", "warnings", "raw_snapshot_file", "parsed_output_file",
+    "provenance", "no_write_guarantee", "live_calls_performed"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "pattern": "^mock-.*" },
+    "source_name": { "type": "string" },
+    "adapter_type": { "enum": ["API", "SFTP", "scrape", "local DB", "JSON", "future"] },
+    "mode": { "const": "mock", "description": "Must be exactly 'mock' for harness runs" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["pass", "fail", "partial"] },
+    "records_fetched": { "type": "integer", "minimum": 0 },
+    "records_parsed": { "type": "integer", "minimum": 0 },
+    "records_rejected": { "type": "integer", "minimum": 0 },
+    "errors": { "type": "array", "items": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "raw_snapshot_file": { "type": "string" },
+    "parsed_output_file": { "type": "string" },
+    "provenance": {
+      "type": "object",
+      "required": ["source_system", "source_fetched_at", "import_run_id", "fetcher_version", "sandbox_only"],
+      "properties": {
+        "source_system": { "type": "string" },
+        "source_fetched_at": { "type": "string" },
+        "import_run_id": { "type": "string" },
+        "fetcher_version": { "type": "string" },
+        "sandbox_only": { "const": true }
+      }
+    },
+    "no_write_guarantee": { "const": true, "description": "Adapter must explicitly guarantee zero writes to any canonical table" },
+    "live_calls_performed": { "const": false, "description": "Must be false for all mock harness runs" },
+    "contract_version": { "type": "string" },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

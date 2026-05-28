@@ -1,0 +1,48 @@
+        // === Global time formatting helpers (12-hour ET) ===
+        function formatTimeET(date) {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).replace(' ', '') + ' ET';
+        }
+
+        function formatRelativeTime(baseDate) {
+            const now = new Date();
+            const diffMs = now - baseDate;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHr = Math.floor(diffMin / 60);
+            const diffDays = Math.floor(diffHr / 24);
+
+            if (diffSec < 60) return 'just now';
+            if (diffMin < 60) return `${diffMin} min ago`;
+            if (diffHr < 24) return `${diffHr} hr ago`;
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return baseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+        }
+
+        function getTimestampColor(deltaMin) {
+            if (deltaMin < 15) return '#5cb8b5';
+            if (deltaMin < 60) return '#e6edf7';
+            if (deltaMin < 1440) return '#fbbf24';
+            return '#fbbf24';
+        }
+
+        function updateHeaderTimestamp() {
+            const mainEl = document.getElementById('last-updated-main');
+            if (!mainEl) return;
+
+            const LAST_PULL_BASE = new Date('2026-05-28T13:50:00');
+            const now = new Date();
+            const diffMin = Math.floor((now - LAST_PULL_BASE) / 60000);
+
+            const rel = formatRelativeTime(LAST_PULL_BASE);
+            const abs = formatTimeET(LAST_PULL_BASE);
+
+            let color = getTimestampColor(diffMin);
+            let icon = (diffMin >= 1440) ? '⚠ ' : '';
+
+            mainEl.innerHTML = `<span style="color:${color};">${icon}${rel}</span>  <span style="color:#8ea3c7;">·  ${abs}</span>`;
+        }
+

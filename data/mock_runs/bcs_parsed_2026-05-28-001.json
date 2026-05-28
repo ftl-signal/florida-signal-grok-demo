@@ -1,0 +1,4 @@
+[
+  {"case_id": "BCS-2025-99123", "type": "Unsafe Structure", "folio": "02-15-01-0130", "expired_permit": "BLD-2023-04567", "status": "Open", "source": "Broward BCS mock"},
+  {"license_id": "CC-545", "company": "Coastal Comfort Inc", "status": "Void", "void_date": "2011-08-31", "source": "Broward BCS mock"}
+]

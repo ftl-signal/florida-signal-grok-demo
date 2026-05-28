@@ -1,0 +1,12 @@
+{
+  "source": "Broward Clerk / BCRM",
+  "fetch_mode": "mock",
+  "note": "This is a mock placeholder. No real Broward Clerk data has been ingested in this sandbox.",
+  "expected_fields_in_future": ["recording_type", "parties", "legal_description", "document_number"],
+  "provenance": {
+    "source_system": "Broward Clerk (future)",
+    "source_fetched_at": null,
+    "import_run_id": null
+  },
+  "kill_switch": true
+}

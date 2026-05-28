@@ -1,0 +1,4 @@
+[
+  {"PosseObjectId": "12345", "type": "Unsafe Structure", "address": "2401 Del Lago Dr", "folio": "02-15-01-0130", "expired_permit": "BLD-2023-04567", "status": "Open", "created_date": "2025-11-15"},
+  {"PosseObjectId": "12346", "type": "Contractor License", "company": "Coastal Comfort Inc", "cc_number": "CC-545", "status": "Void", "void_date": "2011-08-31"}
+]

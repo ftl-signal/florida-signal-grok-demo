@@ -1,0 +1,27 @@
+{
+  "run_id": "mock-2026-05-28-bcpa-001",
+  "source_name": "BCPA Property Card",
+  "adapter_type": "API",
+  "mode": "mock",
+  "started_at": "2026-05-28T14:09:00Z",
+  "finished_at": "2026-05-28T14:09:09Z",
+  "status": "pass",
+  "records_fetched": 87,
+  "records_parsed": 87,
+  "records_rejected": 0,
+  "errors": [],
+  "warnings": [],
+  "raw_snapshot_file": "data/mock_adapters/bcpa_raw_example.json",
+  "parsed_output_file": "data/mock_runs/bcpa_property_card_parsed_2026-05-28-001.json",
+  "provenance": {
+    "source_system": "Broward Property Appraiser ArcGIS (simulated)",
+    "source_fetched_at": "2026-05-28T14:09:00Z",
+    "import_run_id": "mock-2026-05-28-bcpa-001",
+    "fetcher_version": "mock-harness-v0.1",
+    "sandbox_only": true
+  },
+  "no_write_guarantee": true,
+  "live_calls_performed": false,
+  "contract_version": "v0.2",
+  "notes": "Mock property card enrichment run. ~17% overall match rate per prior audits. No live BCPA calls."
+}

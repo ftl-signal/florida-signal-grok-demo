@@ -1,0 +1,17 @@
+{
+  "prefixes": {
+    "BLD": { "meaning": "Building", "confidence": "KNOWN" },
+    "ELE": { "meaning": "Electrical", "confidence": "KNOWN" },
+    "PLB": { "meaning": "Plumbing", "confidence": "KNOWN" },
+    "MEC": { "meaning": "Mechanical", "confidence": "KNOWN" },
+    "FIR": { "meaning": "Fire", "confidence": "KNOWN" },
+    "ENG": { "meaning": "Engineering", "confidence": "KNOWN" },
+    "LND": { "meaning": "Landscape", "confidence": "KNOWN" },
+    "GEN": { "meaning": "General", "confidence": "KNOWN" },
+    "COC": { "meaning": "Certificate / completion-related permit", "confidence": "LIKELY" },
+    "RADD": { "meaning": "Residential addition", "confidence": "LIKELY" },
+    "FEN": { "meaning": "Fence", "confidence": "LIKELY" },
+    "POOL": { "meaning": "Pool / spa / fountain", "confidence": "LIKELY" }
+  },
+  "notes": "Permit codes are local Accela/category codes. Unknown prefixes are marked UNKNOWN and require source confirmation."
+}

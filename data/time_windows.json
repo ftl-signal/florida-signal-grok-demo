@@ -1,0 +1,4 @@
+[{"window":"Last Pull","new_permits_seen":17,"permits_filed":4,"ai_cleaned_pct":100.0,"bcpa_matched_pct":76.5,"sunbiz_matched_pct":68.0,"geocoded_pct":91.0,"accela_detail_pct":100.0},
+{"window":"Last 7 Days","new_permits_seen":142,"permits_filed":31,"ai_cleaned_pct":100.0,"bcpa_matched_pct":71.0,"sunbiz_matched_pct":52.0,"geocoded_pct":84.0,"accela_detail_pct":100.0},
+{"window":"Last 30 Days","new_permits_seen":612,"permits_filed":128,"ai_cleaned_pct":100.0,"bcpa_matched_pct":68.0,"sunbiz_matched_pct":49.0,"geocoded_pct":79.0,"accela_detail_pct":100.0},
+{"window":"All Time (Demo)","new_permits_seen":1247,"permits_filed":287,"ai_cleaned_pct":100.0,"bcpa_matched_pct":62.0,"sunbiz_matched_pct":41.0,"geocoded_pct":71.0,"accela_detail_pct":100.0}]

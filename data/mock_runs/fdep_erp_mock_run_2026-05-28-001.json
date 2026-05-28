@@ -1,0 +1,29 @@
+{
+  "run_id": "mock-2026-05-28-fdep-001",
+  "source_name": "FDEP ERP",
+  "adapter_type": "API",
+  "mode": "mock",
+  "started_at": "2026-05-28T14:05:00Z",
+  "finished_at": "2026-05-28T14:05:12Z",
+  "status": "pass",
+  "records_fetched": 14,
+  "records_parsed": 14,
+  "records_rejected": 0,
+  "errors": [],
+  "warnings": [
+    "Using synthetic Broward-filtered slice from public ArcGIS layer for sandbox testing only"
+  ],
+  "raw_snapshot_file": "data/mock_adapters/fdep_erp_broward_sample.json",
+  "parsed_output_file": "data/mock_runs/fdep_erp_parsed_2026-05-28-001.json",
+  "provenance": {
+    "source_system": "FDEP ArcGIS REST (simulated)",
+    "source_fetched_at": "2026-05-28T14:05:00Z",
+    "import_run_id": "mock-2026-05-28-fdep-001",
+    "fetcher_version": "mock-harness-v0.1",
+    "sandbox_only": true
+  },
+  "no_write_guarantee": true,
+  "live_calls_performed": false,
+  "contract_version": "v0.2",
+  "notes": "Mock only. No network activity. Data derived from prior Claude audit descriptions (2,249 historical Broward ERPs, 14 new in last 30 days)."
+}

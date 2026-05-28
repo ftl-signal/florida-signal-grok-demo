@@ -1,0 +1,10 @@
+[
+  {"permit_number":"DEMO-BLD-26050113","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"1400 DEMO SEAWALL BLVD, FORT LAUDERDALE FL 33316","owner_name":null,"valuation":890000},
+  {"permit_number":"DEMO-BLD-26050117","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"1880 FAKE TOWER ROAD #PH, FORT LAUDERDALE FL 33304","owner_name":null,"valuation":1250000},
+  {"permit_number":"DEMO-BLD-26050126","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"950 DEMO PORT TERMINAL RD, FORT LAUDERDALE FL 33315","owner_name":null,"valuation":1560000},
+  {"permit_number":"DEMO-BLD-26050101","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"100 DEMO PLAZA, FORT LAUDERDALE FL 33301","owner_name":null,"valuation":245000},
+  {"permit_number":"DEMO-MEC-26050112","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"760 TEST AIRPORT PARK, FORT LAUDERDALE FL 33309","owner_name":null,"valuation":428000},
+  {"permit_number":"DEMO-BLD-26050119","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"25 DEMO BEACHFRONT AVE, FORT LAUDERDALE FL 33316","owner_name":null,"valuation":675000},
+  {"permit_number":"DEMO-BLD-26050128","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"1750 SAMPLE CYPRESS CREEK RD, FORT LAUDERDALE FL 33309","owner_name":null,"valuation":890000},
+  {"permit_number":"DEMO-PLB-26050110","detected_at":"2026-05-21T09:15:00Z","final_score":2.5,"top_20_rank":null,"top_5_rank":null,"rules_fired":"demo_land_play","address":"1800 SAMPLE RIVER DRIVE, FORT LAUDERDALE FL 33312","owner_name":null,"valuation":156000}
+]

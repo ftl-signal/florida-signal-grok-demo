@@ -1,0 +1,4 @@
+[
+  {"application_id": "ERP-2026-03145", "project_name": "RIZAI DOCK EXTENSION", "status": "Issued", "applicant": "Rizai Holdings LLC", "county": "Broward", "latitude": 26.1234, "longitude": -80.1234, "received_date": "2026-03-31", "documents": "https://example.dep.state.fl.us/docs/ERP-2026-03145"},
+  {"application_id": "ERP-2026-03152", "project_name": "SEAWALL REPAIR 2401 DEL LAGO", "status": "Under Review", "applicant": "Precision Tech Inc", "county": "Broward", "latitude": 26.125, "longitude": -80.12, "received_date": "2026-04-02", "documents": ""}
+]

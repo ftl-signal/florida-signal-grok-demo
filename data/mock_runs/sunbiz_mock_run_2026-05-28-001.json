@@ -1,0 +1,29 @@
+{
+  "run_id": "mock-2026-05-28-sunbiz-001",
+  "source_name": "Sunbiz",
+  "adapter_type": "SFTP",
+  "mode": "mock",
+  "started_at": "2026-05-28T14:10:00Z",
+  "finished_at": "2026-05-28T14:10:05Z",
+  "status": "pass",
+  "records_fetched": 1250,
+  "records_parsed": 1248,
+  "records_rejected": 2,
+  "errors": [],
+  "warnings": [
+    "2 officer records had truncated name fields"
+  ],
+  "raw_snapshot_file": "data/mock_adapters/sunbiz_sample.json",
+  "parsed_output_file": "data/mock_runs/sunbiz_parsed_2026-05-28-001.json",
+  "provenance": {
+    "source_system": "Florida DOS Sunbiz SFTP (simulated bulk + delta)",
+    "source_fetched_at": "2026-05-28T14:10:00Z",
+    "import_run_id": "mock-2026-05-28-sunbiz-001",
+    "fetcher_version": "mock-harness-v0.1",
+    "sandbox_only": true
+  },
+  "no_write_guarantee": true,
+  "live_calls_performed": false,
+  "contract_version": "v0.2",
+  "notes": "Mock name-matching run against existing sunbiz bulk knowledge. No actual SFTP pull performed."
+}

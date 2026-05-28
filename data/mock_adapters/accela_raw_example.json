@@ -1,0 +1,19 @@
+{
+  "source": "Accela",
+  "fetch_mode": "local",
+  "permit_number": "BLD-COC-26050123",
+  "raw_payload": {
+    "status": "In Process",
+    "applied_date": "2026-05-25",
+    "issued_date": null,
+    "description": "Example Accela permit payload (mock)",
+    "contractor": "TOP CONSTRUCTION SERVICES LLC",
+    "valuation": null
+  },
+  "source_timestamp": "2026-05-25T23:55:50.490117",
+  "provenance": {
+    "source_system": "Accela",
+    "source_fetched_at": "2026-05-25T23:55:50.490117",
+    "import_run_id": "mock-run-001"
+  }
+}

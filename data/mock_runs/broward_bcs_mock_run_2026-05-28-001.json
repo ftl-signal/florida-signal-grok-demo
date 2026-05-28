@@ -1,0 +1,29 @@
+{
+  "run_id": "mock-2026-05-28-bcs-001",
+  "source_name": "Broward BCS",
+  "adapter_type": "scrape",
+  "mode": "mock",
+  "started_at": "2026-05-28T14:07:00Z",
+  "finished_at": "2026-05-28T14:07:15Z",
+  "status": "pass",
+  "records_fetched": 42,
+  "records_parsed": 38,
+  "records_rejected": 4,
+  "errors": [],
+  "warnings": [
+    "POSSE session simulation only - 4 records dropped due to view-state expiration simulation"
+  ],
+  "raw_snapshot_file": "data/mock_adapters/broward_bcs_sample.json",
+  "parsed_output_file": "data/mock_runs/bcs_parsed_2026-05-28-001.json",
+  "provenance": {
+    "source_system": "Broward dpepp.broward.org/BCS/ (POSSE simulated)",
+    "source_fetched_at": "2026-05-28T14:07:00Z",
+    "import_run_id": "mock-2026-05-28-bcs-001",
+    "fetcher_version": "mock-harness-v0.1",
+    "sandbox_only": true
+  },
+  "no_write_guarantee": true,
+  "live_calls_performed": false,
+  "contract_version": "v0.2",
+  "notes": "Mock only. Unsafe Structure + contractor license test cases. Explicitly no real POSSE interaction."
+}

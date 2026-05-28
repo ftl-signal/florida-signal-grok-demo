@@ -1,0 +1,17 @@
+{
+  "source": "BCPA",
+  "fetch_mode": "local",
+  "folio": "494234011260",
+  "raw_payload": {
+    "just_value": 2700450,
+    "use_code": "00-01 Vacant Residential",
+    "homestead_flag": "N",
+    "mailing_address": "2839 NE 26 CT FORT LAUDERDALE FL 33306"
+  },
+  "source_timestamp": "2026-04-29",
+  "provenance": {
+    "source_system": "BCPA",
+    "source_fetched_at": "2026-04-29T18:09:50.720035",
+    "import_run_id": "mock-run-002"
+  }
+}

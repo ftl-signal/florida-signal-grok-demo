@@ -1,0 +1,34 @@
+# Safe Demo Deploy — exclude heavy docs, old snapshots, and non-runtime artifacts
+*.md
+!DEPLOY_INSTRUCTIONS.md
+*.broken_after_*.html
+index.broken_*.html
+BUILD_REPORT*.md
+DATA_REALITY_MATRIX.md
+DEAD_CODE.md
+FILE_MAP.md
+HANDOFF.md
+OLD_COCKPIT_FIELD_IMPORT_REPORT.md
+REVIEW_CHECKLIST.md
+CLOUD_INGESTION_ARCHITECTURE.md
+
+# Reference audits (may contain real source discussion)
+reference/
+test/
+
+# Mock harness artifacts (not needed for UI render)
+data/mock_adapters/
+data/mock_runs/
+
+# Anything else non-essential for static demo
+*.sqlite
+*.sqlite-*
+logs/
+quarantine/
+supabase/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~

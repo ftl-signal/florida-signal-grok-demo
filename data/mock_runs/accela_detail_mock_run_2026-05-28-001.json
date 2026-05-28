@@ -1,0 +1,29 @@
+{
+  "run_id": "mock-2026-05-28-accela-detail-001",
+  "source_name": "Accela Detail",
+  "adapter_type": "API",
+  "mode": "mock",
+  "started_at": "2026-05-28T14:08:00Z",
+  "finished_at": "2026-05-28T14:08:22Z",
+  "status": "pass",
+  "records_fetched": 150,
+  "records_parsed": 147,
+  "records_rejected": 3,
+  "errors": [],
+  "warnings": [
+    "3 records had null applicant_name (known extraction gap from SOURCE_FIELD_AUDIT)"
+  ],
+  "raw_snapshot_file": "data/mock_adapters/accela_raw_example.json",
+  "parsed_output_file": "data/mock_runs/accela_detail_parsed_2026-05-28-001.json",
+  "provenance": {
+    "source_system": "Accela CapDetail (simulated Playwright)",
+    "source_fetched_at": "2026-05-28T14:08:00Z",
+    "import_run_id": "mock-2026-05-28-accela-detail-001",
+    "fetcher_version": "mock-harness-v0.1",
+    "sandbox_only": true
+  },
+  "no_write_guarantee": true,
+  "live_calls_performed": false,
+  "contract_version": "v0.2",
+  "notes": "Mock using existing accela_raw_example.json + field_registry knowledge. No live Accela access."
+}

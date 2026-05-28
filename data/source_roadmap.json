@@ -1,0 +1,819 @@
+{
+  "generated_at": "2026-05-28T18:40:00Z",
+  "source": "Claude data-source inventory integration (read-only): copied DATA_INVENTORY.md, SOURCE_FIELD_AUDIT.md, STRATEGIC_DEEP_RESEARCH_2026-05-10.md, FDEP_ERP_AUDIT_2026-05-10.md, BROWARD_BCS_AUDIT_2026-05-10.md, BROWARD_LIENS_AUDIT_2026-05-10.md, THREE_SOURCE_AUDIT_2026-05-10.md, MISSING_FEEDS_BACKLOG.md, WEEKLY_SIGNAL_PACKET_SCHEMA.md + field_registry.json + dashboard_summary.json. Strictly sandbox. No live calls, no scraping, no writes.",
+  "total_sources": 29,
+  "notes": "This is the single source of truth for Source Roadmap in the sandbox cockpit. Statuses reflect current local snapshot + Claude audit findings. All future adapters must reference these entries. | Normalized for this request: added explicit \"status\" and \"risk_level\" fields on every source (2026-05-28 follow-up pass).",
+  "sources": [
+    {
+      "source_name": "Accela CSV",
+      "category": "Core Permit Data",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "very_high",
+      "build_cost": "low",
+      "fields_available": [
+        "permit_number",
+        "status",
+        "applied_date",
+        "issued_date",
+        "description",
+        "owner_name",
+        "contractor_name",
+        "permit_type",
+        "valuation",
+        "address",
+        "parcel_id",
+        "fees_total",
+        "~22 CSV headers total"
+      ],
+      "fields_captured": [
+        "permit_number",
+        "status",
+        "applied_date",
+        "issued_date",
+        "description",
+        "contractor_name",
+        "permit_type",
+        "address",
+        "parcel_id (raw)",
+        "valuation (sparse)",
+        "owner_name (sparse)"
+      ],
+      "known_gaps": "applicant_email, applicant_address, co_date, usage_class, original_valuation, assigned_to not stored; finalized_date 0% populated in source reports; owner_name near 0% on recent rows",
+      "dependencies": [
+        "Accela Crystal Reports exports (3 report types)"
+      ],
+      "first_safe_test": "Validate HEADER_MAP + raw_<label> fallback on existing permits_sample.json + accela_raw_example.json",
+      "hard_boundaries": "Sandbox only. No live Accela API or CSV download. Current data is static snapshot from permits_READONLY.sqlite.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "SOURCE_FIELD_AUDIT.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Accela Detail",
+      "category": "Core Permit Data",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "~45+ DOM fields on CapDetail: workflow, valuation richer, inspections, related records, contractor_license, applicant details, conditions, documents"
+      ],
+      "fields_captured": [
+        "application_info_json (partial)",
+        "contractor_license (via detail)",
+        "source_url",
+        "raw_json fallback for many"
+      ],
+      "known_gaps": "applicant_name and parcel_block extraction dead (0% despite scraper code); workflow/related/conditions mostly in JSON blobs not normalized columns",
+      "dependencies": [
+        "Accela Detail scraper (Playwright)",
+        "Accela CSV permit_numbers"
+      ],
+      "first_safe_test": "Parse accela_raw_example.json + permits with accela_details joins in current snapshot",
+      "hard_boundaries": "No live detail page scraping. All data from local snapshot only.",
+      "reference_docs": [
+        "SOURCE_FIELD_AUDIT.md",
+        "DATA_INVENTORY.md",
+        "ACCELA_DETAIL_AUDIT.md (not copied - see reference)"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Accela Inspections",
+      "category": "Core Permit Data",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "inspection_type",
+        "inspect_date",
+        "result",
+        "inspector",
+        "comments (from Accela detail or CSV)"
+      ],
+      "fields_captured": [
+        "inspections JSON blob (accela_details)",
+        "normalized accela_inspections table (partial)"
+      ],
+      "known_gaps": "9,919 of 19,973 rows in current accela_inspections are pagination junk (empty type, 'View Details', page numbers)",
+      "dependencies": [
+        "Accela Detail scraper",
+        "permit_number"
+      ],
+      "first_safe_test": "Filter junk rows from existing accela_inspections in sandbox snapshot; validate against 100 known permits",
+      "hard_boundaries": "No new scraping. Current table has known data quality issues from prior scrape.",
+      "reference_docs": [
+        "SOURCE_FIELD_AUDIT.md",
+        "DATA_INVENTORY.md"
+      ],
+      "status": "partial",
+      "risk_level": "high"
+    },
+    {
+      "source_name": "Accela Related Records / Subpermit Events",
+      "category": "Core Permit Data",
+      "current_status": "stub",
+      "adapter_type": "local DB",
+      "signal_value": "medium",
+      "build_cost": "medium",
+      "fields_available": [
+        "related_permits_json (from detail scraper)",
+        "subpermit links, parent/child, amendments"
+      ],
+      "fields_captured": [
+        "related_permits_json (stored but unparsed in most rows)"
+      ],
+      "known_gaps": "No normalized subpermit_events table; parent/child relationships not resolved in current snapshot",
+      "dependencies": [
+        "Accela Detail",
+        "permit_number graph"
+      ],
+      "first_safe_test": "Inspect related_permits_json on 50 high-value permits in permits_sample + accela details",
+      "hard_boundaries": "No live calls. Subpermit resolution is future enrichment only.",
+      "reference_docs": [
+        "SOURCE_FIELD_AUDIT.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "stub",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "BCPA Tier 1 / Tier 2",
+      "category": "Property & Ownership",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "low",
+      "fields_available": [
+        "folio",
+        "owner_name_1",
+        "use_code",
+        "just_value_num",
+        "homestead_flag",
+        "mailing_address (raw in JSON)",
+        "lat/lon centroid",
+        "legal_desc",
+        "neighborhood",
+        "voting_precinct"
+      ],
+      "fields_captured": [
+        "folio (verified 8%)",
+        "owner_name (via resolution)",
+        "just_value (sparse columns)",
+        "use_code",
+        "homestead",
+        "lat",
+        "lon"
+      ],
+      "known_gaps": "Only ~8-17% parcel_id_verified overall; mailing address, legal, neighborhood, voting not extracted from raw_json; Tier 2 (deeper attrs) not populated",
+      "dependencies": [
+        "BCPA ArcGIS REST (Tier1 free)",
+        "parcel_id_verified join from Accela"
+      ],
+      "first_safe_test": "Re-run bcpa_tier1 enrichment on current 1000-row sample; measure folio match rate improvement",
+      "hard_boundaries": "Sandbox local snapshots only. No live BCPA API calls.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "SOURCE_FIELD_AUDIT.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "BCPA Property Card",
+      "category": "Property & Ownership",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "very_high",
+      "build_cost": "low",
+      "fields_available": [
+        "~190 fields in parcelInfo + sub-blocks: just_value, land_value, building_value, living_area, year_built, beds, baths, picture_path, owner alerts, etc."
+      ],
+      "fields_captured": [
+        "folio",
+        "just_value (partial columns)",
+        "use_code",
+        "homestead_flag",
+        "raw_json (full for matched)"
+      ],
+      "known_gaps": "~17% capture of exposed fields; sales history, tax history, flood, mailing address buried in JSON or separate tables with low coverage",
+      "dependencies": [
+        "BCPA Tier1 match",
+        "enrich_bcpa_property_card.py"
+      ],
+      "first_safe_test": "Validate bcpa_property_card table row count + raw_json integrity against 100 known folios in snapshot",
+      "hard_boundaries": "No live BCPA calls. Current data is frozen snapshot.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "SOURCE_FIELD_AUDIT.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "BCPA Sales History",
+      "category": "Property & Ownership",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "saleDate1-5, deedType1-5, stampAmount1-5, salePrice1-5, buyer/seller from BCPA card inline + dedicated bcpa_sales_history table"
+      ],
+      "fields_captured": [
+        "bcpa_sales_history table covers only 26% of matched parcels"
+      ],
+      "known_gaps": "Majority of matched parcels lack sales rows; 5-row inline history not extracted to columns",
+      "dependencies": [
+        "BCPA Property Card",
+        "folio"
+      ],
+      "first_safe_test": "Count bcpa_sales_history rows vs matched folios in current DB snapshot; spot-check 10 recent sales",
+      "hard_boundaries": "No live enrichment. Historical sales data incomplete in sandbox.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "SOURCE_FIELD_AUDIT.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "BCPA Tax History",
+      "category": "Property & Ownership",
+      "current_status": "stub",
+      "adapter_type": "local DB",
+      "signal_value": "medium",
+      "build_cost": "medium",
+      "fields_available": [
+        "tax_year, assessed_value, taxes_paid, exemptions from BCPA card / dedicated table"
+      ],
+      "fields_captured": [
+        "bcpa_tax_history table (very low row count in current snapshot)"
+      ],
+      "known_gaps": "Almost no tax history rows populated despite source availability",
+      "dependencies": [
+        "BCPA Property Card",
+        "folio"
+      ],
+      "first_safe_test": "Query bcpa_tax_history coverage in sandbox snapshot",
+      "hard_boundaries": "Not exercised in current data load. Future only.",
+      "reference_docs": [
+        "DATA_INVENTORY.md"
+      ],
+      "status": "stub",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "BCPA Flood Zone",
+      "category": "Property & Ownership",
+      "current_status": "stub",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "low",
+      "fields_available": [
+        "flood_zone, flood_map, panel, base_flood_elevation from BCPA property card"
+      ],
+      "fields_captured": [
+        "Not extracted to dedicated column or bcpa_flood_zone table in current snapshot"
+      ],
+      "known_gaps": "Critical for seawall/NAVD + insurance signals; zero structured capture today",
+      "dependencies": [
+        "BCPA Property Card"
+      ],
+      "first_safe_test": "Inspect raw_json of 20 bcpa_property_card rows for flood keys; design extraction",
+      "hard_boundaries": "No live BCPA. Flood data is available in raw but unused.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "stub",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Sunbiz SFTP",
+      "category": "Business & Contractor",
+      "current_status": "partial",
+      "adapter_type": "SFTP",
+      "signal_value": "high",
+      "build_cost": "low",
+      "fields_available": [
+        "36 master fields + 6x7 officer fields per entity: entity_name, document_number, status, officers, address, filing dates (full 12.6M entities, 20.6M officers)"
+      ],
+      "fields_captured": [
+        "sunbiz_entities + sunbiz_officers tables (bulk loaded via ingest_sunbiz_sftp.py)",
+        "owner_sunbiz_doc (0.8%)",
+        "contractor_sunbiz_doc (47%)"
+      ],
+      "known_gaps": "Name matching coverage low on owners (0.8% recent); officer links and LLC docs mostly missing from resolution layer",
+      "dependencies": [
+        "Florida DOS SFTP quarterly + daily deltas",
+        "backfill_sunbiz_matches.py (fuzzy name)"
+      ],
+      "first_safe_test": "Validate sunbiz bulk load row counts + sample officer matches against 100 contractors in snapshot",
+      "hard_boundaries": "Current data is static SFTP snapshot. No new SFTP pulls in sandbox.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "SOURCE_FIELD_AUDIT.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Sunbiz Name Matching",
+      "category": "Business & Contractor",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "Fuzzy + deterministic match of permit owner_name/contractor_name -> Sunbiz document_number + officers"
+      ],
+      "fields_captured": [
+        "owner_sunbiz_doc (sparse)",
+        "contractor_sunbiz_doc (47% contractors)"
+      ],
+      "known_gaps": "Owner matching near zero on newest rows; no 2-hop graph; no officer role extraction into resolution",
+      "dependencies": [
+        "Sunbiz SFTP",
+        "owner_resolution",
+        "contractor_name normalization"
+      ],
+      "first_safe_test": "Re-run backfill_sunbiz_matches on current 1000-row sample; measure contractor match lift",
+      "hard_boundaries": "No live Sunbiz. Matching logic frozen at snapshot state.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "WEEKLY_SIGNAL_PACKET_SCHEMA.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Broward Clerk / Official Records",
+      "category": "Liens, Recordings & Legal",
+      "current_status": "planned",
+      "adapter_type": "SFTP",
+      "signal_value": "very_high",
+      "build_cost": "medium",
+      "fields_available": [
+        "~2500-2700 daily records: document_type (NOC, LIE, LP, FJ, CFJ, RST, DEED, MORT), document_number, parties (grantor/grantee), legal_description, parcel_id (folio format), recording_date, book/page, consideration (6 pipe files/day via public SFTP bcftp.broward.org)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Zero ingestion in current sandbox snapshot. Highest-leverage missing feed per all audits.",
+      "dependencies": [
+        "bcftp.broward.org SFTP (crpublic/crpublic, no auth)",
+        "folio + owner/contractor name join"
+      ],
+      "first_safe_test": "Download one daily Official_Records_Download/ bundle (10 most recent days retained); parse one file type (e.g. NOC); count matches against 50 known permits by folio/owner",
+      "hard_boundaries": "NOT APPROVED FOR LIVE SFTP PULLS. Sandbox only. Public credentials documented but no automation yet. 3-4 day QA lag noted.",
+      "reference_docs": [
+        "BROWARD_LIENS_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "MISSING_FEEDS_BACKLOG.md"
+      ],
+      "status": "planned",
+      "risk_level": "high"
+    },
+    {
+      "source_name": "Google Geocode",
+      "category": "Location & Geospatial",
+      "current_status": "partial",
+      "adapter_type": "API",
+      "signal_value": "high",
+      "build_cost": "low",
+      "fields_available": [
+        "lat, lon, geo_source, geo_match_confidence, formatted_address"
+      ],
+      "fields_captured": [
+        "lat, lon (7.2% overall, many from BCPA instead)",
+        "geocoded_at (stale: 2026-05-05 per dashboard_summary)"
+      ],
+      "known_gaps": "23+ days stale per dashboard_summary; many rows still missing or low-confidence; BCPA centroid preferred but incomplete",
+      "dependencies": [
+        "address from permits",
+        "Google Geocoding API (or cache)"
+      ],
+      "first_safe_test": "Re-geocode the stale cohort identified in dashboard_summary using local cache only",
+      "hard_boundaries": "No live Google API calls. Current geocode data is frozen and partially stale.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "field_registry.json"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Owner Resolution",
+      "category": "Identity & Resolution",
+      "current_status": "partial",
+      "adapter_type": "local DB",
+      "signal_value": "very_high",
+      "build_cost": "medium",
+      "fields_available": [
+        "resolved_owner_name, confidence, requires_human_verification, source (BCPA + Accela + Sunbiz + fuzzy)"
+      ],
+      "fields_captured": [
+        "resolved_owner_name (in owner_resolution table)",
+        "owner_confidence (stub in registry)"
+      ],
+      "known_gaps": "Low confidence on many LLC shells; human verify flag not wired; contractor resolution not yet extended (per audits); mailing_is_same_as_situs not auto-updated",
+      "dependencies": [
+        "BCPA owner_1",
+        "Accela owner_name",
+        "Sunbiz matches",
+        "folio"
+      ],
+      "first_safe_test": "Run resolution on 100 recent permits; spot-audit 10 low-confidence cases against BCPA raw",
+      "hard_boundaries": "Current resolution table is snapshot-only. No new matching runs.",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "WEEKLY_SIGNAL_PACKET_SCHEMA.md"
+      ],
+      "status": "partial",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Land Sales",
+      "category": "Property & Ownership",
+      "current_status": "stub",
+      "adapter_type": "future",
+      "signal_value": "medium",
+      "build_cost": "high",
+      "fields_available": [
+        "sale_price, sale_date, buyer, seller, deed_type, folio from external land sales feeds (not detailed in current audits)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No table or feed integrated; overlaps with BCPA sales but external market comps missing",
+      "dependencies": [
+        "External land sales data vendor or public records"
+      ],
+      "first_safe_test": "Identify public Broward land sales source; manual cross-ref 5 recent high-value permits",
+      "hard_boundaries": "Not in scope for current sandbox. Future research only.",
+      "reference_docs": [
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "stub",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Broward BCS",
+      "category": "Code, Compliance & Contractor Licensing",
+      "current_status": "planned",
+      "adapter_type": "scrape",
+      "signal_value": "very_high",
+      "build_cost": "medium",
+      "fields_available": [
+        "11 search interfaces: Permits, Contractor License (CC# + status + void_date), Certificate of Use (CU#, Category, Required Inspections, Status), Code Compliance / Enforcement (case#, Unsafe Structure with Expired Permit Number, folio), Elevators"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Zero data in sandbox. POSSE web UI only (no API, session cookies, wildcard search). Highest value: Unsafe Structure (joins on expired permit), contractor license status (void cards), CU tenant turnover.",
+      "dependencies": [
+        "dpepp.broward.org/BCS/ (Computronix POSSE)",
+        "folio + contractor_name + permit_number"
+      ],
+      "first_safe_test": "Manual polite browser search for 5 known high-volume contractors + 5 expired permits from snapshot; capture PosseObjectId permalinks; design throttle (1 req/5s)",
+      "hard_boundaries": "NOT APPROVED FOR AUTOMATED SCRAPING. High boundary: session/cookie/Cloudflare risk. Manual research only in sandbox. Explicit future approval + robots/ToS review required.",
+      "reference_docs": [
+        "BROWARD_BCS_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "THREE_SOURCE_AUDIT_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "high"
+    },
+    {
+      "source_name": "FDEP ERP",
+      "category": "Environmental Permits",
+      "current_status": "planned",
+      "adapter_type": "API",
+      "signal_value": "very_high",
+      "build_cost": "low",
+      "fields_available": [
+        "application_id, project_name, status, applicant, location (lat/lon), documents (DepNexus PDF links), ERP type (dock, seawall, wetland, stormwater), received_date, county (8 feature layers on ca.dep.state.fl.us/arcgis/rest/services/OpenData/ERP/)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Zero ERP records in current sandbox. Clean geo + docs, 5-6 week leading indicator validated on real cross-refs (e.g. dock extension ERP then building permits).",
+      "dependencies": [
+        "FDEP ArcGIS REST (no auth, no rate limit)",
+        "folio/address match to permits"
+      ],
+      "first_safe_test": "Dry-run query Layer 1 (or all ERP) for Broward bbox + last 90 days; return 10-20 records; validate schema + cross-ref 2-3 known dock/seawall permits from snapshot",
+      "hard_boundaries": "NOT APPROVED FOR LIVE CALLS YET. Recommended first live candidate per audits. Explicit operator approval + dry-run + kill switch + rate policy required in future sprint. Sandbox mock only.",
+      "reference_docs": [
+        "FDEP_ERP_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "THREE_SOURCE_AUDIT_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "high"
+    },
+    {
+      "source_name": "FAA OE/AAA",
+      "category": "Airspace & Tall Structures",
+      "current_status": "planned",
+      "adapter_type": "API",
+      "signal_value": "high",
+      "build_cost": "low",
+      "fields_available": [
+        "ASN, sponsor, structureType (incl CRANE), aglStructureHeight, latitude, longitude, statusCode, dateEntered (11 GET endpoints, XML, oeaaa.faa.gov, no auth, weekly CSV bulk)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Zero FAA data in sandbox. Crane filings are leading indicator of active construction before permits visible.",
+      "dependencies": [
+        "FAA OE/AAA REST + weekly CSV",
+        "lat/lon proximity to permits"
+      ],
+      "first_safe_test": "Single call to one endpoint for FL/2026 sample (4,623 ASNs in prior test); filter cranes + Broward bbox; manual cross to 3 high-rise permits",
+      "hard_boundaries": "No live FAA calls in sandbox. Public API but not exercised.",
+      "reference_docs": [
+        "THREE_SOURCE_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Broward Foreclosure Auction / RealAuction",
+      "category": "Legal & Distress",
+      "current_status": "planned",
+      "adapter_type": "scrape",
+      "signal_value": "medium",
+      "build_cost": "medium",
+      "fields_available": [
+        "case #, 12-char Parcel ID (exact BCPA folio), address, final judgment amount, plaintiff, max bid, auction date/time (daily iterable URL on broward.realforeclose.com)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Zero data. ~100-150/month in Broward. Distress signal for owners/contractors with active permits.",
+      "dependencies": [
+        "RealAuction platform (public view, login only for bid)",
+        "folio exact match"
+      ],
+      "first_safe_test": "Browse one AUCTIONDATE page for current week; extract 5-10 rows; match 1-2 against known folios in snapshot",
+      "hard_boundaries": "No automated scraping. Manual review only for research.",
+      "reference_docs": [
+        "THREE_SOURCE_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Broward AGOL",
+      "category": "GIS & Infrastructure",
+      "current_status": "planned",
+      "adapter_type": "API",
+      "signal_value": "medium",
+      "build_cost": "medium",
+      "fields_available": [
+        "Water/sewer service layers, utility connection points, CRA boundaries, opportunity zones, canal/intracoastal shapefiles (Broward GIS REST + ArcGIS Online)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No AGOL or utility layers integrated. Proximity to water/sewer + CRA useful for signals.",
+      "dependencies": [
+        "Broward GIS REST / AGOL services",
+        "permit lat/lon or folio"
+      ],
+      "first_safe_test": "Query one public water/sewer layer for 5 known FTL permit locations; validate join feasibility",
+      "hard_boundaries": "No live GIS queries in sandbox. Future infrastructure layer.",
+      "reference_docs": [
+        "THREE_SOURCE_AUDIT_2026-05-10.md",
+        "DATA_INVENTORY.md"
+      ],
+      "status": "planned",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Notice of Commencement",
+      "category": "Liens, Recordings & Legal",
+      "current_status": "planned",
+      "adapter_type": "SFTP",
+      "signal_value": "very_high",
+      "build_cost": "low",
+      "fields_available": [
+        "NOC-specific records (~260/day) from Official Records SFTP: owner, contractor, folio, recording_date, legal (subset of Broward Clerk feed)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "NOC is the single highest-ROI subset of Clerk feed (FS 713.13 pre-inspection requirement). Not ingested.",
+      "dependencies": [
+        "Broward Clerk / Official Records SFTP"
+      ],
+      "first_safe_test": "From one daily Clerk file, filter NOC rows; join 5-10 to permits by folio + contractor_name",
+      "hard_boundaries": "Part of Broward Clerk SFTP. Same hard boundary: no live pulls yet.",
+      "reference_docs": [
+        "BROWARD_LIENS_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Code Enforcement / ENF",
+      "category": "Code, Compliance & Contractor Licensing",
+      "current_status": "planned",
+      "adapter_type": "scrape",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "Enforcement cases, Unsafe Structure, Code Compliance from BCS SearchForEnforcement + ParcelSearchForEnforcement (case#, folio, status, type, created_date)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Subset of BCS. Unsafe Structure is the star (expired permit join). No data today.",
+      "dependencies": [
+        "Broward BCS POSSE",
+        "folio"
+      ],
+      "first_safe_test": "Manual search BCS Enforcement for 3 known expired permits from snapshot; record PosseObjectId + status",
+      "hard_boundaries": "Same as BCS: scrape risk, not approved for automation. Manual only.",
+      "reference_docs": [
+        "BROWARD_BCS_AUDIT_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "high"
+    },
+    {
+      "source_name": "Conduits municipal liens",
+      "category": "Liens, Recordings & Legal",
+      "current_status": "future",
+      "adapter_type": "future",
+      "signal_value": "medium",
+      "build_cost": "high",
+      "fields_available": [
+        "Municipal lien data (code fines, utility liens, special assessments) from various city conduits (not detailed in primary audits)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No municipal lien feed integrated. Overlaps with Clerk but city-specific.",
+      "dependencies": [
+        "City-specific portals or bulk exports"
+      ],
+      "first_safe_test": "Research Fort Lauderdale + 2 other Broward cities for public lien export options",
+      "hard_boundaries": "Out of current scope. Not prioritized in Claude audits.",
+      "reference_docs": [
+        "MISSING_FEEDS_BACKLOG.md"
+      ],
+      "status": "future",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "City meeting minutes",
+      "category": "Public Records & Narrative",
+      "current_status": "future",
+      "adapter_type": "future",
+      "signal_value": "medium",
+      "build_cost": "high",
+      "fields_available": [
+        "Planning/zoning/commission minutes, agendas, resolutions mentioning permits, owners, projects (PDF + text)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Narrative context (community opposition, variances, political) completely absent from structured data.",
+      "dependencies": [
+        "City clerk portals (FTL + others), PDF OCR/extraction"
+      ],
+      "first_safe_test": "Manual pull 2-3 recent FTL commission packets; keyword search 5 active high-value permits",
+      "hard_boundaries": "Future NLP layer. No current ingestion or OCR in sandbox.",
+      "reference_docs": [
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "MISSING_FEEDS_BACKLOG.md"
+      ],
+      "status": "future",
+      "risk_level": "low"
+    },
+    {
+      "source_name": "Proximity / GIS scoring",
+      "category": "Location & Geospatial",
+      "current_status": "future",
+      "adapter_type": "future",
+      "signal_value": "high",
+      "build_cost": "medium",
+      "fields_available": [
+        "Distance to canal/intracoastal/ocean, CRA membership, opportunity zone, flood zone, school district, etc. (computed from GIS layers + permit lat/lon)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No proximity features computed. Required for NAVD seawall + many signals.",
+      "dependencies": [
+        "Broward GIS shapefiles",
+        "permit lat/lon (or folio centroid)",
+        "PostGIS or client-side Turf"
+      ],
+      "first_safe_test": "Load 2-3 Broward water shapefiles; compute distance for 20 permits with known lat/lon",
+      "hard_boundaries": "Scoring layer deferred per all prior sprints (no FAST/enrichment/scoring in this sandbox).",
+      "reference_docs": [
+        "DATA_INVENTORY.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "future",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "NAVD seawall compliance",
+      "category": "Environmental Permits",
+      "current_status": "future",
+      "adapter_type": "future",
+      "signal_value": "high",
+      "build_cost": "high",
+      "fields_available": [
+        "Seawall elevation, NAVD datum compliance, repair/permitting status (derived from FDEP ERP + BCPA flood + county seawall layer + permit description)"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No seawall-specific layer. Critical post-hurricane + flood insurance signal.",
+      "dependencies": [
+        "FDEP ERP (dock/seawall permits)",
+        "BCPA Flood Zone",
+        "County seawall GIS",
+        "permit text mining"
+      ],
+      "first_safe_test": "Filter FDEP ERP for seawall/dock keywords in 2026; cross 3 to BCPA flood + building permits",
+      "hard_boundaries": "Requires FDEP + GIS + NLP. Deferred until core ERP/BCS/Clerk landed.",
+      "reference_docs": [
+        "FDEP_ERP_AUDIT_2026-05-10.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "future",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Weekly Signal Packet Generator",
+      "category": "Intelligence Products",
+      "current_status": "planned",
+      "adapter_type": "JSON",
+      "signal_value": "very_high",
+      "build_cost": "medium",
+      "fields_available": [
+        "Full structured packet per signal: permit snapshot, owner graph (BCPA+Sunbiz+resolution), contractor (Accela+Sunbiz+BCS license), liens/NOC (future Clerk), ERP cross-refs, BCPA card, provenance, raw_json sections per WEEKLY_SIGNAL_PACKET_SCHEMA"
+      ],
+      "fields_captured": [],
+      "known_gaps": "Generator does not exist in sandbox. Schema is fully specified; no execution.",
+      "dependencies": [
+        "All core + high-value sources (Accela, BCPA, Sunbiz, Owner Resolution, future Clerk/ERP/BCS)",
+        "field_registry",
+        "permits + enrichment tables"
+      ],
+      "first_safe_test": "Implement client-side packet builder for 3 high-value permits using existing local JSONs; emit sample matching schema",
+      "hard_boundaries": "No production packet generation. This sandbox cockpit can only preview stub packets from local data.",
+      "reference_docs": [
+        "WEEKLY_SIGNAL_PACKET_SCHEMA.md",
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "planned",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Parallel AI Adversarial Review",
+      "category": "Intelligence Products",
+      "current_status": "future",
+      "adapter_type": "future",
+      "signal_value": "high",
+      "build_cost": "high",
+      "fields_available": [
+        "Independent AI critiques of signal packets, red-team findings, hallucination checks, alternative explanations"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No AI review layer implemented. Pure future.",
+      "dependencies": [
+        "Weekly Signal Packet Generator",
+        "multiple LLM endpoints + eval harness"
+      ],
+      "first_safe_test": "Manual prompt 2-3 sample packets through 2 different models; compare outputs by hand",
+      "hard_boundaries": "Explicitly out of scope for this sandbox (no enrichment, no scoring, no live AI). Research only.",
+      "reference_docs": [
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md",
+        "WEEKLY_SIGNAL_PACKET_SCHEMA.md"
+      ],
+      "status": "future",
+      "risk_level": "medium"
+    },
+    {
+      "source_name": "Kepler.gl spatial map",
+      "category": "Visualization",
+      "current_status": "future",
+      "adapter_type": "JSON",
+      "signal_value": "medium",
+      "build_cost": "low",
+      "fields_available": [
+        "GeoJSON export of permits + signals + ERP + Clerk points + heat layers for spatial analysis in Kepler.gl"
+      ],
+      "fields_captured": [],
+      "known_gaps": "No geo export or Kepler config in cockpit. Static maps only in current UI.",
+      "dependencies": [
+        "permit lat/lon + all geo sources",
+        "client-side or static GeoJSON generator"
+      ],
+      "first_safe_test": "Export 500 permits with lat/lon from permits_sample as GeoJSON; load in local Kepler.gl instance",
+      "hard_boundaries": "Visualization only. No new data collection. Future UX layer.",
+      "reference_docs": [
+        "STRATEGIC_DEEP_RESEARCH_2026-05-10.md"
+      ],
+      "status": "future",
+      "risk_level": "low"
+    }
+  ]
+}
