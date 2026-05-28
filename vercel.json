@@ -3,6 +3,12 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "devCommand": "python3 -m http.server 4173 || python -m http.server 4173",
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
