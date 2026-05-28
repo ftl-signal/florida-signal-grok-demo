@@ -122,7 +122,7 @@ module.exports = async (req, res) => {
 
     // Bounded filters (safe)
     params.append('region', `eq.${region}`);
-    params.append('invalid', 'eq.false');
+    params.append('invalid', 'eq.0');
     params.append('permit_number', 'not.is.null');
 
     if (search && search.length >= 2) {
