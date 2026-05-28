@@ -178,14 +178,19 @@
 
         async function loadDashboardData() {
             try {
-                const [dashboardSummary, permits, signals, coverage, timeWindows, enrichmentStats] = await Promise.all([
+                const [dashboardSummary, permitsResponse, signals, coverage, timeWindows, enrichmentStats] = await Promise.all([
                     fetch('data/dashboard_summary.json').then(r => r.json()),
-                    fetch('data/permits_sample.json').then(r => r.json()),
+                    // Phase 2B: Use adapter (demo by default, live only if explicitly enabled)
+                    (typeof window.getPermits === 'function' 
+                        ? window.getPermits({ limit: 100 }) 
+                        : fetch('data/permits_sample.json').then(r => r.json()).then(d => ({ data: d, meta: { source: 'demo_static' } }))),
                     fetch('data/signals_sample.json').then(r => r.json()),
                     fetch('data/coverage_summary.json').then(r => r.json()).catch(() => ({})),
                     fetch('data/time_windows.json').then(r => r.json()).catch(() => []),
                     fetch('data/enrichment_stats.json').then(r => r.json()).catch(() => ({}))
                 ]);
+
+                const permits = (permitsResponse && permitsResponse.data) ? permitsResponse.data : permitsResponse;
 
                 window.dashboardSummary = dashboardSummary;
                 dashboardSummaryData = dashboardSummary;
