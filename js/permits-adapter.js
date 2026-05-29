@@ -22,7 +22,7 @@ const MAX_LIMIT = 100;
  * @param {number} [params.limit]
  * @returns {Promise<{data: any[], meta: any}>}
  */
-export async function getPermits(params = {}) {
+async function getPermits(params = {}) {
   const { search = '', status = '', limit = DEFAULT_LIMIT } = params;
   const effectiveLimit = Math.min(limit, MAX_LIMIT);
 
