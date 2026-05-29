@@ -1,193 +1,103 @@
-/**
- * Vercel Serverless Function: GET /api/permits
- *
- * Phase 2B integration — First real-data permit list endpoint.
- *
- * IMPORTANT:
- * - This file lives in the dashboard deployment root.
- * - Demo mode is DEFAULT. No env vars = synthetic data.
- * - Live mode only when SUPABASE_URL and SUPABASE_ANON_KEY are set.
- * - Server-side only Supabase access (never in browser).
- * - Narrow field list only (no PII).
- * - Hard row limit.
- */
+// api/permits.js — returns permit rows from Supabase (live) or sample JSON (demo)
+// Auth: requires HttpOnly cookie fl_session set by /api/auth
+// Query: no region filter, no Prefer:count=exact, simplified order (uses idx_permits_last_seen_at)
 
-const DEMO_DATA_PATH = '../data/permits_sample.json'; // relative to api/ when served
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-// Safe narrow fields confirmed available in live permits table (Phase 2A inspection)
+const COOKIE_NAME = 'fl_session';
+
 const SAFE_FIELDS = [
-  'permit_number',
-  'permit_type',
-  'status',
-  'applied_date',
-  'issued_date',
-  'address',
-  'address_normalized',
-  'valuation',
-  'valuation_usd_clean',
-  'permit_category',
-  'report_source',
-  'region',
-  'is_commercial',
-  'source_accela',
-  'source_bcpa',
-  'source_sunbiz',
-  'last_enriched_at',
-  'first_seen_at',
-  'last_seen_at'
+  'permit_number', 'permit_type', 'status', 'applied_date', 'issued_date',
+  'address', 'address_normalized', 'valuation', 'valuation_usd_clean',
+  'permit_category', 'report_source', 'region', 'is_commercial',
+  'source_accela', 'source_bcpa', 'source_sunbiz', 'last_enriched_at',
+  'first_seen_at', 'last_seen_at'
 ].join(',');
 
-module.exports = async (req, res) => {
-  // CORS for local dev if needed
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+  for (const part of cookieHeader.split(';')) {
+    const [k, ...rest] = part.trim().split('=');
+    cookies[k.trim()] = decodeURIComponent(rest.join('=').trim());
+  }
+  return cookies;
+}
+
+function isAuthenticated(req) {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies[COOKIE_NAME];
+  if (!token) return false;
+  const expected = process.env.FL_SIGNAL_DASHBOARD_PASSWORD;
+  if (!expected) return false;
+  return token === Buffer.from(expected).toString('base64');
+}
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  const requestedLimit = Math.min(parseInt(req.query.limit ?? '50', 10) || 50, 200);
+  const liveMode = req.query.livePermits === '1';
 
-  const { search = '', status = '', limit = '50', region = 'FTL' } = req.query;
-
-  const requestedLimit = Math.min(parseInt(limit, 10) || 50, 100); // Hard cap
-
-  // ============================================
-  // DEMO MODE (DEFAULT)
-  // ============================================
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
+  // ── Demo mode ────────────────────────────────────────────────────────────────
+  if (!liveMode) {
     try {
-      // Serve from local synthetic data (Phase 1 sample)
-      // In production build this path resolves relative to the function
-      const fs = require('fs');
-      const path = require('path');
-      const demoPath = path.join(__dirname, '..', 'data', 'permits_sample.json');
-      let demoData = [];
-
-      if (fs.existsSync(demoPath)) {
-        demoData = JSON.parse(fs.readFileSync(demoPath, 'utf8'));
-      }
-
-      // Client-side style filtering for demo parity (simple)
-      let filtered = demoData;
-
-      if (search && search.length >= 2) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(p =>
-          (p.permit_number && p.permit_number.toLowerCase().includes(q)) ||
-          (p.address && p.address.toLowerCase().includes(q))
-        );
-      }
-
-      if (status) {
-        filtered = filtered.filter(p => p.status === status);
-      }
-
-      // Region default filter for demo
-      filtered = filtered.filter(p => !p.region || p.region === region || p.region === 'BROWARD');
-
-      const sliced = filtered.slice(0, requestedLimit);
-
-      return res.status(200).json({
-        data: sliced,
-        meta: {
-          source: 'demo_static',
-          count: sliced.length,
-          limit: requestedLimit,
-          has_more: filtered.length > requestedLimit,
-        }
-      });
-    } catch (e) {
-      console.error('Demo fallback error:', e);
-      return res.status(200).json({
-        data: [],
-        meta: { source: 'demo_static', count: 0, limit: requestedLimit, has_more: false }
-      });
+      const filePath = join(process.cwd(), 'data', 'permits_sample.json');
+      const raw = readFileSync(filePath, 'utf8');
+      const all = JSON.parse(raw);
+      const rows = all.slice(0, requestedLimit);
+      return res.status(200).json({ mode: 'demo_static', count: rows.length, hasMore: all.length > requestedLimit, rows });
+    } catch (err) {
+      console.error('[permits] demo read error', err.message);
+      return res.status(500).json({ error: 'demo data unavailable' });
     }
   }
 
-  // ============================================
-  // LIVE MODE (Supabase — server side only)
-  // ============================================
+  // ── Live mode — require auth cookie ──────────────────────────────────────────
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('[permits] SUPABASE_URL or SUPABASE_ANON_KEY not set');
+    return res.status(500).json({ error: 'Supabase not configured' });
+  }
+
   try {
     const params = new URLSearchParams({
       select: SAFE_FIELDS,
-      order: 'last_seen_at.desc.nullslast,permit_number.desc',
-      limit: String(requestedLimit + 1), // one extra for has_more
+      order: 'last_seen_at.desc.nullslast',
+      limit: String(requestedLimit + 1),
     });
 
-    // Bounded filters (safe)
-            params.append('permit_number', 'not.is.null');
-
-    if (search && search.length >= 2) {
-      // Bounded ILIKE on safe columns only
-      const q = `%${search}%`;
-      params.append('or', `(permit_number.ilike.${q},address_normalized.ilike.${q})`);
-    }
-
-    if (status) {
-      params.append('status', `eq.${status}`);
-    }
-
-    const supabaseRestUrl = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/permits?${params.toString()}`;
-
-    const response = await fetch(supabaseRestUrl, {
+    const url = `${supabaseUrl}/rest/v1/permits?${params}`;
+    const response = await fetch(url, {
       headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
         'Content-Type': 'application/json',
-        'Prefer': 'count=exact', // for has_more detection if needed
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Supabase error: ${response.status}`);
+      const errText = await response.text();
+      console.error('[permits] Supabase error', response.status, errText);
+      return res.status(502).json({ error: 'upstream error', detail: errText });
     }
 
-    let data = await response.json();
+    const rows = await response.json();
+    const hasMore = rows.length > requestedLimit;
+    if (hasMore) rows.pop();
 
-    const hasMore = data.length > requestedLimit;
-    data = data.slice(0, requestedLimit);
-
-    return res.status(200).json({
-      data,
-      meta: {
-        source: 'supabase_readonly',
-        count: data.length,
-        limit: requestedLimit,
-        has_more: hasMore,
-      }
-    });
-
-  } catch (error) {
-    console.error('Live /api/permits error (falling back to demo):', error.message);
-
-    // Safe fallback to demo
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const demoPath = path.join(__dirname, '..', 'data', 'permits_sample.json');
-      const demoData = JSON.parse(fs.readFileSync(demoPath, 'utf8')).slice(0, requestedLimit);
-
-      return res.status(200).json({
-        data: demoData,
-        meta: {
-          source: 'demo_static',
-          count: demoData.length,
-          limit: requestedLimit,
-          has_more: false,
-          note: 'Live query failed — using demo data',
-        }
-      });
-    } catch (fallbackErr) {
-      return res.status(200).json({
-        data: [],
-        meta: { source: 'demo_static', count: 0, limit: requestedLimit, has_more: false }
-      });
-    }
+    return res.status(200).json({ mode: 'live', count: rows.length, hasMore, rows });
+  } catch (err) {
+    console.error('[permits] fetch error', err.message);
+    return res.status(500).json({ error: 'fetch failed', detail: err.message });
   }
-};
+}

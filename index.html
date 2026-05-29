@@ -14,4 +14,159 @@
             </div></div><div id="section-system" class="section"><div class="text-2xl font-semibold tracking-tight mb-4">System</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div class="clean-card"><div class="font-semibold mb-2">Sandbox Boundary Status</div><div class="text-xs text-teal-400">✓ Fully isolated — all data from local READONLY JSONs only</div><div class="text-xs text-red-400 mt-1">✗ Hard prohibitions: No production DB, no Supabase, no enrichment runs, no scoring writes</div></div><div class="clean-card"><div class="font-semibold mb-2">Data Files Loaded (live diagnostics)</div><div id="data-diagnostics" class="text-xs space-y-0.5"><div>dashboard_summary.json: <span class="text-amber-400">loading...</span></div><div>permits_sample.json: <span class="text-amber-400">loading...</span><span id="permits-count-diag"></span></div><div>source_roadmap.json: <span class="text-amber-400">loading...</span></div><div>field_registry.json: <span class="text-amber-400">loading...</span></div><div>adapter_test_results.json: <span class="text-amber-400">loading...</span></div></div><div class="text-[10px] text-red-400 mt-1 hidden" id="data-load-error"></div></div></div><div class="clean-card"><div class="font-semibold mb-2">Known Stubs &amp; Limitations</div><div class="text-xs grid grid-cols-2 gap-x-4"><div>• XLSX / full AI Packet exports (client-side only)</div><div>• Broward Clerk / liens / NOC (no feed ingested)</div><div>• Rich BCPA sales &amp; tax history (limited in current sample)</div><div>• Production scoring / signals_v2 (paused)</div></div></div><div class="clean-card mt-4"><div class="font-semibold mb-2">Runtime Smoke Checks (browser reality)</div><div class="text-xs grid grid-cols-2 gap-x-4 text-slate-300"><div>dashboard_summary loaded: <span class="text-teal-400">yes</span></div><div>permits_sample loaded: <span class="text-teal-400">1000 rows</span></div><div>permits table rendered: <span id="smoke-permits-rows" class="text-teal-400">—</span></div><div>source_roadmap count: <span class="text-teal-400">29</span></div><div>Full Case File default tab: <span class="text-teal-400">Snapshot</span></div><div>last render error: <span class="text-slate-500">none</span></div><div>Drawer current permit: <span id="smoke-drawer-permit" class="text-teal-400">—</span></div><div>Case Tree status: <span class="text-teal-400">STUB + basic tree (never blank)</span></div></div></div><div class="clean-card mt-4"><div class="font-semibold mb-2">Missing Field Truth Matrix (from local audit)</div><div id="missing-field-matrix-diag" class="text-xs grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-0.5 text-slate-300"><div class="text-slate-500">Loading matrix...</div></div><div class="text-[10px] text-slate-400 mt-2">See data/missing_field_matrix.json for full per-field reasons + proof sources. Labels in drawer and Full Case File now use these precise categories.</div></div><div class="clean-card mt-4"><div class="font-semibold mb-2">Handoff Package</div><div class="text-[10px] text-amber-400 mb-2">Note: Tailwind CDN is temporarily preserved in this sandbox recovery state pending a future proper local CSS migration. All data remains 100% local JSON.</div><div class="text-xs grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1"><div><a href="HANDOFF.md" class="text-teal-400 hover:underline">HANDOFF.md</a> — Primary onboarding guide</div><div><a href="DATA_REALITY_MATRIX.md" class="text-teal-400 hover:underline">DATA_REALITY_MATRIX.md</a> — Real vs mock vs stub vs planned</div><div><a href="REVIEW_CHECKLIST.md" class="text-teal-400 hover:underline">REVIEW_CHECKLIST.md</a> — 9-section review gates + questions</div><div><a href="FILE_MAP.md" class="text-teal-400 hover:underline">FILE_MAP.md</a> — Complete artifact inventory</div><div><a href="BUILD_REPORT.md" class="text-teal-400 hover:underline">BUILD_REPORT.md</a> — Full sprint history + verification</div><div><a href="CLOUD_INGESTION_ARCHITECTURE.md" class="text-teal-400 hover:underline">CLOUD_INGESTION_ARCHITECTURE.md</a> — Contract + Autonomy Ladder</div><div><a href="OLD_COCKPIT_FIELD_IMPORT_REPORT.md" class="text-teal-400 hover:underline">OLD_COCKPIT_FIELD_IMPORT_REPORT.md</a> — Full Case File field port status</div></div><div class="text-[10px] text-slate-400 mt-2">A new reviewer should be able to understand the entire project, its boundaries, and the exact next safe step in under 10 minutes.</div></div><div class="mt-4 text-xs text-slate-400">
                 Build reports &amp; references available in this folder: BUILD_REPORT.md, OLD_COCKPIT_FIELD_IMPORT_REPORT.md, data/field_registry.json, reference/old_claude_cockpit/
             </div></div></div><div id="permit-modal" onclick="if (event.target.id === 'permit-modal') closePermitModal()" class="hidden fixed inset-0 bg-black/60 z-[9999]"><div onclick="event.stopImmediatePropagation()" id="permit-drawer"
-             class="side-drawer bg-slate-900 border-l border-slate-700 flex flex-col"><div class="sticky top-0 z-10 bg-slate-900 border-b border-slate-700 px-5 py-3 flex items-center justify-between"><div id="drawer-header" class="font-semibold text-lg tracking-tight font-mono"></div><div class="flex items-center gap-2"><button onclick="closePermitModal()" class="text-xs px-3 py-1 text-slate-400 hover:text-white">CLOSE</button></div></div><div class="px-5 pt-3 pb-2 border-b border-slate-800 flex flex-wrap gap-1 bg-slate-950/60 text-xs" id="drawer-tabs"><button type="button" onclick="switchDrawerTab('overview')" class="drawer-tab active" data-tab="overview">Overview</button><button type="button" onclick="switchDrawerTab('sources')" class="drawer-tab" data-tab="sources">Sources</button><button type="button" onclick="switchDrawerTab('parcel')" class="drawer-tab" data-tab="parcel">Parcel/BCPA</button><button type="button" onclick="switchDrawerTab('company')" class="drawer-tab" data-tab="company">Company/Sunbiz</button><button type="button" onclick="switchDrawerTab('accela')" class="drawer-tab" data-tab="accela">Accela</button><button type="button" onclick="switchDrawerTab('broward')" class="drawer-tab" data-tab="broward">Broward/Clerk</button><button type="button" onclick="switchDrawerTab('raw')" class="drawer-tab" data-tab="raw">Raw JSON</button><button type="button" onclick="switchDrawerTab('notes')" class="drawer-tab" data-tab="notes">Notes/AI</button></div><div class="p-5 flex-1 overflow-auto text-sm" id="permit-modal-content"></div></div></div><div id="details-modal" class="details-modal" onclick="if (event.target.id === 'details-modal') closeDetailsModal()"><div onclick="event.stopImmediatePropagation()" class="details-content"><div class="flex justify-between items-center mb-3"><div id="details-title" class="font-semibold text-lg text-teal-400"></div><button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white text-sm px-3">CLOSE</button></div><div id="details-body" class="text-sm text-slate-200 leading-relaxed prose prose-invert max-w-none"></div><div class="mt-4 text-[10px] text-slate-500">Source: dashboard_summary.json + derived snapshot data — sandbox only.</div></div></div><div id="full-case-file-modal" class="hidden fixed inset-0 bg-black/90 z-[10010]" onclick="if (event.target.id === 'full-case-file-modal') closeFullCaseFile()"><div onclick="event.stopImmediatePropagation()" class="bg-slate-900 w-full h-full overflow-hidden flex flex-col"><div class="px-6 py-3 border-b border-slate-700 flex items-center justify-between bg-slate-950"><div class="flex items-center gap-4"><div><span id="full-case-permit-number" class="font-mono text-xl font-semibold tracking-tighter"></span><span id="full-case-address" class="ml-3 text-sm text-slate-400"></span></div><span class="px-2 py-0.5 text-xs bg-teal-500/10 text-teal-400 rounded">FULL CASE FILE</span></div><div class="flex items-center gap-2"><button onclick="closeFullCaseFile()" class="px-4 py-1 text-sm bg-slate-800 hover:bg-slate-700 rounded-2xl">Close Full Case File</button><button onclick="closeFullCaseFile()" aria-label="Close full case file" class="text-2xl leading-none px-2 text-slate-400 hover:text-white">×</button></div></div><div class="px-6 pt-2 pb-1 border-b border-slate-800 flex flex-wrap gap-1 bg-slate-950 text-sm" id="full-case-tabs"><button type="button" data-tab="snapshot" onclick="switchFullCaseTab('snapshot')" class="full-case-tab active px-3 py-1 rounded cursor-pointer">Snapshot</button><button type="button" data-tab="permit" onclick="switchFullCaseTab('permit')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Permit</button><button type="button" data-tab="owner-parcel" onclick="switchFullCaseTab('owner-parcel')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Owner &amp; Parcel</button><button type="button" data-tab="contractor-sunbiz" onclick="switchFullCaseTab('contractor-sunbiz')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Contractor &amp; Sunbiz</button><button type="button" data-tab="bcpa" onclick="switchFullCaseTab('bcpa')" class="full-case-tab px-3 py-1 rounded cursor-pointer">BCPA Property Card</button><button type="button" data-tab="broward" onclick="switchFullCaseTab('broward')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Broward Clerk / BCRM</button><button type="button" data-tab="accela" onclick="switchFullCaseTab('accela')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Accela Detail</button><button type="button" data-tab="provenance" onclick="switchFullCaseTab('provenance')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Provenance</button><button type="button" data-tab="case-tree" onclick="switchFullCaseTab('case-tree')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Case Tree</button><button type="button" data-tab="raw" onclick="switchFullCaseTab('raw')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Raw Row</button></div><div id="full-case-content" class="flex-1 overflow-auto p-6 text-sm bg-slate-950"></div></div></div><script src="js/permits-adapter.js" defer></script><script src="js/system.js" defer></script><script src="js/overview.js" defer></script><script src="js/pipeline.js" defer></script><script src="js/permits.js" defer></script><script src="js/enrichment.js" defer></script><script src="js/sources.js" defer></script><script src="js/ingestion.js" defer></script><script src="js/signals.js" defer></script><script src="js/components/permit-drawer.js" defer></script><script src="js/components/full-case-file.js" defer></script><script src="js/app.js" defer></script></body></html>
+             class="side-drawer bg-slate-900 border-l border-slate-700 flex flex-col"><div class="sticky top-0 z-10 bg-slate-900 border-b border-slate-700 px-5 py-3 flex items-center justify-between"><div id="drawer-header" class="font-semibold text-lg tracking-tight font-mono"></div><div class="flex items-center gap-2"><button onclick="closePermitModal()" class="text-xs px-3 py-1 text-slate-400 hover:text-white">CLOSE</button></div></div><div class="px-5 pt-3 pb-2 border-b border-slate-800 flex flex-wrap gap-1 bg-slate-950/60 text-xs" id="drawer-tabs"><button type="button" onclick="switchDrawerTab('overview')" class="drawer-tab active" data-tab="overview">Overview</button><button type="button" onclick="switchDrawerTab('sources')" class="drawer-tab" data-tab="sources">Sources</button><button type="button" onclick="switchDrawerTab('parcel')" class="drawer-tab" data-tab="parcel">Parcel/BCPA</button><button type="button" onclick="switchDrawerTab('company')" class="drawer-tab" data-tab="company">Company/Sunbiz</button><button type="button" onclick="switchDrawerTab('accela')" class="drawer-tab" data-tab="accela">Accela</button><button type="button" onclick="switchDrawerTab('broward')" class="drawer-tab" data-tab="broward">Broward/Clerk</button><button type="button" onclick="switchDrawerTab('raw')" class="drawer-tab" data-tab="raw">Raw JSON</button><button type="button" onclick="switchDrawerTab('notes')" class="drawer-tab" data-tab="notes">Notes/AI</button></div><div class="p-5 flex-1 overflow-auto text-sm" id="permit-modal-content"></div></div></div><div id="details-modal" class="details-modal" onclick="if (event.target.id === 'details-modal') closeDetailsModal()"><div onclick="event.stopImmediatePropagation()" class="details-content"><div class="flex justify-between items-center mb-3"><div id="details-title" class="font-semibold text-lg text-teal-400"></div><button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white text-sm px-3">CLOSE</button></div><div id="details-body" class="text-sm text-slate-200 leading-relaxed prose prose-invert max-w-none"></div><div class="mt-4 text-[10px] text-slate-500">Source: dashboard_summary.json + derived snapshot data — sandbox only.</div></div></div><div id="full-case-file-modal" class="hidden fixed inset-0 bg-black/90 z-[10010]" onclick="if (event.target.id === 'full-case-file-modal') closeFullCaseFile()"><div onclick="event.stopImmediatePropagation()" class="bg-slate-900 w-full h-full overflow-hidden flex flex-col"><div class="px-6 py-3 border-b border-slate-700 flex items-center justify-between bg-slate-950"><div class="flex items-center gap-4"><div><span id="full-case-permit-number" class="font-mono text-xl font-semibold tracking-tighter"></span><span id="full-case-address" class="ml-3 text-sm text-slate-400"></span></div><span class="px-2 py-0.5 text-xs bg-teal-500/10 text-teal-400 rounded">FULL CASE FILE</span></div><div class="flex items-center gap-2"><button onclick="closeFullCaseFile()" class="px-4 py-1 text-sm bg-slate-800 hover:bg-slate-700 rounded-2xl">Close Full Case File</button><button onclick="closeFullCaseFile()" aria-label="Close full case file" class="text-2xl leading-none px-2 text-slate-400 hover:text-white">×</button></div></div><div class="px-6 pt-2 pb-1 border-b border-slate-800 flex flex-wrap gap-1 bg-slate-950 text-sm" id="full-case-tabs"><button type="button" data-tab="snapshot" onclick="switchFullCaseTab('snapshot')" class="full-case-tab active px-3 py-1 rounded cursor-pointer">Snapshot</button><button type="button" data-tab="permit" onclick="switchFullCaseTab('permit')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Permit</button><button type="button" data-tab="owner-parcel" onclick="switchFullCaseTab('owner-parcel')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Owner &amp; Parcel</button><button type="button" data-tab="contractor-sunbiz" onclick="switchFullCaseTab('contractor-sunbiz')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Contractor &amp; Sunbiz</button><button type="button" data-tab="bcpa" onclick="switchFullCaseTab('bcpa')" class="full-case-tab px-3 py-1 rounded cursor-pointer">BCPA Property Card</button><button type="button" data-tab="broward" onclick="switchFullCaseTab('broward')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Broward Clerk / BCRM</button><button type="button" data-tab="accela" onclick="switchFullCaseTab('accela')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Accela Detail</button><button type="button" data-tab="provenance" onclick="switchFullCaseTab('provenance')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Provenance</button><button type="button" data-tab="case-tree" onclick="switchFullCaseTab('case-tree')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Case Tree</button><button type="button" data-tab="raw" onclick="switchFullCaseTab('raw')" class="full-case-tab px-3 py-1 rounded cursor-pointer">Raw Row</button></div><div id="full-case-content" class="flex-1 overflow-auto p-6 text-sm bg-slate-950"></div></div></div><script src="js/permits-adapter.js" defer></script><script src="js/system.js" defer></script><script src="js/overview.js" defer></script><script src="js/pipeline.js" defer></script><script src="js/permits.js" defer></script><script src="js/enrichment.js" defer></script><script src="js/sources.js" defer></script><script src="js/ingestion.js" defer></script><script src="js/signals.js" defer></script><script src="js/components/permit-drawer.js" defer></script><script src="js/components/full-case-file.js" defer></script><script src="js/app.js" defer></script>
+<!-- FL_SIGNAL AUTH GATE — injected by deploy_auth_gate.py -->
+<style>
+#fl-login-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0f1117;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+#fl-login-overlay.visible { display: flex; }
+#fl-login-box {
+  background: #1a1d27;
+  border: 1px solid #2a2d3a;
+  border-radius: 10px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+#fl-login-box h2 {
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+#fl-login-box input[type=password] {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#fl-login-box input[type=password]:focus { border-color: #4f8ef7; }
+#fl-login-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.65rem;
+  background: #4f8ef7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#fl-login-btn:hover { background: #3a76e0; }
+#fl-login-btn:disabled { background: #2a4a8a; cursor: not-allowed; }
+#fl-login-error {
+  color: #f87171;
+  font-size: 0.82rem;
+  margin-top: 0.6rem;
+  text-align: center;
+  min-height: 1.1em;
+}
+</style>
+
+<div id="fl-login-overlay">
+  <div id="fl-login-box">
+    <h2>Florida Signal — Access</h2>
+    <input type="password" id="fl-pw-input" placeholder="Password" autocomplete="current-password" />
+    <button id="fl-login-btn">Sign in</button>
+    <div id="fl-login-error"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById('fl-login-overlay');
+  var btn = document.getElementById('fl-login-btn');
+  var input = document.getElementById('fl-pw-input');
+  var errEl = document.getElementById('fl-login-error');
+
+  // Check if already authenticated: try a probe fetch
+  function probe() {
+    fetch('/api/permits?livePermits=1&limit=1')
+      .then(function (r) {
+        if (r.status === 401) { overlay.classList.add('visible'); }
+        // 200 or 5xx from upstream = cookie valid, let dashboard load
+      })
+      .catch(function () { /* network error — skip gate */ });
+  }
+
+  probe();
+
+  function doLogin() {
+    var pw = input.value;
+    if (!pw) return;
+    btn.disabled = true;
+    errEl.textContent = '';
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    })
+      .then(function (r) {
+        if (r.ok) {
+          overlay.classList.remove('visible');
+          input.value = '';
+        } else {
+          errEl.textContent = 'Incorrect password.';
+        }
+      })
+      .catch(function () { errEl.textContent = 'Network error. Try again.'; })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  btn.addEventListener('click', doLogin);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+})();
+</script>
+<!-- END FL_SIGNAL AUTH GATE -->
+
+<!-- Logout button injected by deploy_auth_gate.py -->
+<script>
+(function() {
+  function addLogout() {
+    var existing = document.getElementById('fl-logout-btn');
+    if (existing) return;
+    var btn = document.createElement('button');
+    btn.id = 'fl-logout-btn';
+    btn.textContent = 'Logout';
+    btn.style.cssText = [
+      'position:fixed', 'bottom:1rem', 'right:1rem', 'z-index:9998',
+      'background:#1a1d27', 'color:#94a3b8', 'border:1px solid #2a2d3a',
+      'border-radius:6px', 'padding:0.4rem 0.8rem', 'font-size:0.8rem',
+      'cursor:pointer', 'font-family:inherit'
+    ].join(';');
+    btn.addEventListener('click', function() {
+      fetch('/api/auth', { method: 'DELETE' }).then(function() {
+        location.reload();
+      });
+    });
+    document.body.appendChild(btn);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addLogout);
+  } else {
+    addLogout();
+  }
+})();
+</script>
+<!-- END Logout button -->
+
+</body></html>
