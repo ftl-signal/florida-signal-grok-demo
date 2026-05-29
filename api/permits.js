@@ -70,13 +70,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Support custom order from client (e.g. valuation_usd_clean.desc.nullslast)
+    // Fall back to a safe indexed-ish order if not provided.
+    const requestedOrder = req.query.order || 'last_seen_at.desc.nullslast';
+    // Basic safety: only allow certain columns in order
+    const safeOrder = requestedOrder.includes('valuation_usd_clean') || requestedOrder.includes('last_seen_at')
+      ? requestedOrder
+      : 'last_seen_at.desc.nullslast';
+
     const params = new URLSearchParams({
       select: SAFE_FIELDS,
-      order: 'last_seen_at.desc.nullslast',
+      order: safeOrder,
       limit: String(requestedLimit + 1),
     });
 
-    // Support minValuation for $700k+ filter (client-side post-filter since no DB index yet)
     const minValuation = parseInt(req.query.minValuation || '0', 10);
 
     const url = `${supabaseUrl}/rest/v1/permits?${params}`;
@@ -98,11 +105,9 @@ export default async function handler(req, res) {
     const hasMore = rows.length > requestedLimit;
     if (hasMore) rows.pop();
 
-    // Apply minValuation filter server-side (bounded fetch + JS filter)
+    // Optional post-filter for high-value only (when the "Major Valuation" filter is active)
     if (minValuation > 0) {
-      const before = rows.length;
       rows = rows.filter(r => (r.valuation_usd_clean || r.valuation || 0) >= minValuation);
-      // Note: we don't adjust hasMore here as it's a post-filter on a limited batch
     }
 
     return res.status(200).json({ mode: 'live', count: rows.length, hasMore, rows });

@@ -537,7 +537,7 @@
                 banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#0f172a;color:#bae6fd;border-bottom:1px solid #1e3a8a;font-size:11px;font-family:Inter,system-ui,sans-serif;padding:4px 12px;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.02em;';
                 banner.innerHTML = `
                     <span style="font-weight:700;color:#7dd3fc;">LIVE MODE — READ-ONLY SUPABASE MIRROR</span>
-                    <span style="opacity:0.85;">Real permit data. No PII. Filtered to $700,000+ valuation.</span>
+                    <span style="opacity:0.85;">All permits · sorted by valuation (highest first). $700k+ get high-value labels.</span>
                     <span style="margin-left:6px;padding:1px 6px;border:1px solid #1e40af;border-radius:3px;font-size:10px;font-weight:600;background:#1e3a8a;">LIVE DATA</span>
                 `;
             } else {

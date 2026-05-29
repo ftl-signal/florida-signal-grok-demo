@@ -36,35 +36,27 @@ async function getPermits(params = {}) {
     return getDemoPermits(search, status, effectiveLimit);
   }
 
-  // LIVE MODE — call the server endpoint (with livePermits flag for auth + filtering)
+  // LIVE MODE — call the server endpoint (with livePermits flag for auth)
   try {
     const query = new URLSearchParams({
       search,
       status,
       limit: String(effectiveLimit),
       livePermits: '1',
-      minValuation: '700000',   // server-side or client-side filter to $700k+
+      // Default to valuation descending for live mode (highest first).
+      // Null/zero valuations will sort lower naturally with .nullslast handling on backend.
+      order: 'valuation_usd_clean.desc.nullslast,last_seen_at.desc.nullslast',
     });
+
+    // Only add minValuation when the optional "Major Valuation" filter is active
+    if (params.minValuation) {
+      query.set('minValuation', String(params.minValuation));
+    }
 
     const res = await fetch(`/api/permits?${query.toString()}`);
     if (!res.ok) throw new Error('API request failed');
 
-    const response = await res.json();
-
-    // Client-side safety filter for minValuation if server didn't filter
-    let rows = response.rows || response.data || [];
-    const minVal = 700000;
-    const originalCount = rows.length;
-    rows = rows.filter(r => (r.valuation_usd_clean || r.valuation || 0) >= minVal);
-
-    if (rows.length < originalCount) {
-      response.note = `Showing ${rows.length} permits ≥ $700,000 (from recent batch; full indexed filter pending)`;
-    }
-
-    response.rows = rows;
-    response.count = rows.length;
-
-    return response;
+    return await res.json();
   } catch (err) {
     console.warn('[permits-adapter] Live fetch failed, falling back to demo:', err);
     return getDemoPermits(search, status, effectiveLimit);
