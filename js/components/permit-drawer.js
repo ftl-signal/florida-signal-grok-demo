@@ -151,6 +151,22 @@
             currentDrawerPermit = permit;
             currentDrawerTab = 'overview';
 
+            // Phase 3A: If in live mode, fetch richer detail from server
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                           window.__FL_SIGNAL_LIVE_DATA === true;
+
+            if (isLive && permit && permit.permit_number) {
+                fetchLivePermitDetail(permit.permit_number).then(detail => {
+                    if (detail && detail.permit) {
+                        // Merge live detail over the list row (list row has limited fields)
+                        currentDrawerPermit = { ...permit, ...detail.permit };
+                        renderDrawerTabContent();
+                    }
+                }).catch(() => {
+                    // Silently keep the list row data + honest labels in render
+                });
+            }
+
             // Tiny smoke check
             const smokeDrawer = document.getElementById('smoke-drawer-permit');
             if (smokeDrawer) smokeDrawer.textContent = permit ? permit.permit_number : '—';
@@ -183,6 +199,16 @@
         function showPermitModalByNumber(num) {
             const p = (permitsData || []).find(x => x.permit_number === num);
             if (p) showPermitModal(p);
+        }
+
+        async function fetchLivePermitDetail(permitNumber) {
+            try {
+                const res = await fetch(`/api/permit-detail?permit_number=${encodeURIComponent(permitNumber)}&livePermits=1`);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) {
+                return null;
+            }
         }
 
         function closePermitModal() {
