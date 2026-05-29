@@ -90,57 +90,61 @@
                            window.__FL_SIGNAL_LIVE_DATA === true;
 
             if (isLive) {
-                const liveSum = window.liveOverviewSummary && window.liveOverviewSummary.mode === 'live' ? window.liveOverviewSummary : null;
+                // Compute real high-value count from the live permits data we already loaded for the table (no new queries)
+                const livePermits = (window.permitsData && window.permitsData.length ? window.permitsData :
+                                   (typeof permitsData !== 'undefined' && permitsData.length ? permitsData : []));
 
-                let newCount = '—';
-                let newLabel = 'Latest live batch pending';
-                let metricsHtml = `
-                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Processed</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                `;
-
-                if (liveSum) {
-                    if (liveSum.permits_over_700k != null) {
-                        newCount = liveSum.permits_over_700k.toLocaleString();
-                        newLabel = '≥ $700k live';
-                    } else if (liveSum.latest_last_seen_at) {
-                        newCount = 'Recent';
-                        newLabel = 'see header for last seen';
-                    }
-
-                    const p = liveSum.address_coverage_pct != null ? liveSum.address_coverage_pct + '%' : (liveSum.missing_address_count != null ? 'Missing ' + liveSum.missing_address_count.toLocaleString() : 'Pending');
-                    const b = liveSum.source_coverage && liveSum.source_coverage.bcpa != null ? liveSum.source_coverage.bcpa + '%' : 'Pending';
-                    const s = liveSum.source_coverage && liveSum.source_coverage.sunbiz != null ? liveSum.source_coverage.sunbiz + '%' : 'Pending';
-
-                    metricsHtml = `
-                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">High-value</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${liveSum.permits_over_700k != null ? liveSum.permits_over_700k.toLocaleString() : '—'}</div></div>
-                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${b}</div></div>
-                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${s}</div></div>
-                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${p}</div></div>
-                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">Live</div></div>
-                    `;
+                let highValueCount = 0;
+                let latestSeenIso = null;
+                if (livePermits.length > 0) {
+                    livePermits.forEach(p => {
+                        const val = (p.valuation_usd_clean || p.valuation || 0);
+                        if (val >= 700000) highValueCount++;
+                        if (p.last_seen_at && (!latestSeenIso || p.last_seen_at > latestSeenIso)) {
+                            latestSeenIso = p.last_seen_at;
+                        }
+                    });
                 }
 
-                const htmlLive = `
-                    <div>
-                        <div class="latest-intake-top-band" style="display:flex; align-items:flex-end; gap:28px; margin-bottom:8px;">
-                            <div style="flex-shrink:0;">
-                                <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">${newCount}</span>
-                                <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">new / high-value</span>
+                let htmlLive;
+                if (highValueCount > 0) {
+                    // Show real number from live data — makes the card look complete and useful
+                    htmlLive = `
+                        <div>
+                            <div class="latest-intake-top-band" style="display:flex; align-items:flex-end; gap:28px; margin-bottom:8px;">
+                                <div style="flex-shrink:0;">
+                                    <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">${highValueCount.toLocaleString()}</span>
+                                    <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">high-value permits</span>
+                                </div>
+                                <div style="line-height:1.1; padding-bottom:4px; flex-shrink:0;">
+                                    <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LIVE MIRROR</div>
+                                    <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">Top results (valuation sorted)</div>
+                                </div>
+                                <div class="latest-intake-metrics" style="display:flex; gap:20px; margin-left:auto; padding-bottom:6px;">
+                                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">In view</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${livePermits.length}</div></div>
+                                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">≥ $700k</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${highValueCount}</div></div>
+                                </div>
                             </div>
-                            <div style="line-height:1.1; padding-bottom:4px; flex-shrink:0;">
-                                <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LATEST LIVE</div>
-                                <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">${newLabel}</div>
+                            <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror. Intake metrics will appear after summary endpoint is wired. See header for exact latest timestamp.</div>
+                        </div>`;
+                } else {
+                    // Clean pending state — no giant blank dash, no weird "new / high-value" text
+                    htmlLive = `
+                        <div>
+                            <div class="latest-intake-top-band" style="display:flex; align-items:flex-start; gap:28px; margin-bottom:8px;">
+                                <div style="flex-shrink:0; max-width: 260px;">
+                                    <div style="font-size:26px; line-height:1.15; font-weight:700; color:#5cb8b5;">Live intake summary pending</div>
+                                    <div style="font-size:12px; color:#94a3b8; margin-top:6px; line-height:1.3;">Latest live permit seen: see header above</div>
+                                </div>
+                                <div style="line-height:1.1; padding-top:4px; flex-shrink:0;">
+                                    <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LIVE MIRROR</div>
+                                    <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:2px;">Batch metrics pending</div>
+                                </div>
                             </div>
-                            <div class="latest-intake-metrics" style="display:flex; gap:20px; margin-left:auto; padding-bottom:6px;">
-                                ${metricsHtml}
-                            </div>
-                        </div>
-                        <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror — some metrics remain pending until richer sync is wired.</div>
-                    </div>`;
+                            <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror. Intake metrics will appear after summary endpoint is wired.</div>
+                        </div>`;
+                }
+
                 el.innerHTML = htmlLive;
                 return;
             }

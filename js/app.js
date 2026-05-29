@@ -362,6 +362,16 @@
                 // Extra hygiene pass after table render (catches late drawer state)
                 setTimeout(fixLiveModeCopy, 120);
 
+                // Re-render Latest Intake card now that live permits data is available (so high-value count can appear)
+                const isLiveForCard = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
+                if (isLiveForCard) {
+                    setTimeout(() => {
+                        if (typeof renderLatestIntakeBatch === 'function') {
+                            safeRender('renderLatestIntakeBatch', () => renderLatestIntakeBatch(timeWindows, dashboardSummary));
+                        }
+                    }, 80);
+                }
+
                 // Signals (FROZEN)
                 safeRender('renderSignals', () => renderSignals(signals));
 
