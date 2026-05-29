@@ -76,6 +76,9 @@ export default async function handler(req, res) {
       limit: String(requestedLimit + 1),
     });
 
+    // Support minValuation for $700k+ filter (client-side post-filter since no DB index yet)
+    const minValuation = parseInt(req.query.minValuation || '0', 10);
+
     const url = `${supabaseUrl}/rest/v1/permits?${params}`;
     const response = await fetch(url, {
       headers: {
@@ -91,9 +94,16 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'upstream error', detail: errText });
     }
 
-    const rows = await response.json();
+    let rows = await response.json();
     const hasMore = rows.length > requestedLimit;
     if (hasMore) rows.pop();
+
+    // Apply minValuation filter server-side (bounded fetch + JS filter)
+    if (minValuation > 0) {
+      const before = rows.length;
+      rows = rows.filter(r => (r.valuation_usd_clean || r.valuation || 0) >= minValuation);
+      // Note: we don't adjust hasMore here as it's a post-filter on a limited batch
+    }
 
     return res.status(200).json({ mode: 'live', count: rows.length, hasMore, rows });
   } catch (err) {

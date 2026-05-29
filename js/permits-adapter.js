@@ -36,19 +36,35 @@ async function getPermits(params = {}) {
     return getDemoPermits(search, status, effectiveLimit);
   }
 
-  // LIVE MODE — call the server endpoint
+  // LIVE MODE — call the server endpoint (with livePermits flag for auth + filtering)
   try {
     const query = new URLSearchParams({
       search,
       status,
       limit: String(effectiveLimit),
-      region: 'FTL',
+      livePermits: '1',
+      minValuation: '700000',   // server-side or client-side filter to $700k+
     });
 
     const res = await fetch(`/api/permits?${query.toString()}`);
     if (!res.ok) throw new Error('API request failed');
 
-    return await res.json();
+    const response = await res.json();
+
+    // Client-side safety filter for minValuation if server didn't filter
+    let rows = response.rows || response.data || [];
+    const minVal = 700000;
+    const originalCount = rows.length;
+    rows = rows.filter(r => (r.valuation_usd_clean || r.valuation || 0) >= minVal);
+
+    if (rows.length < originalCount) {
+      response.note = `Showing ${rows.length} permits ≥ $700,000 (from recent batch; full indexed filter pending)`;
+    }
+
+    response.rows = rows;
+    response.count = rows.length;
+
+    return response;
   } catch (err) {
     console.warn('[permits-adapter] Live fetch failed, falling back to demo:', err);
     return getDemoPermits(search, status, effectiveLimit);

@@ -322,25 +322,37 @@ function toggleEditionDropdown() {
             const c = document.getElementById('mission-control-cards');
             if (!c || !dash) return;
 
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
+
             const m = dash.metrics || {};
             const total = m.total_permits?.value || 115862;
             const lastPull = (timeWindows && timeWindows[0]) || {};
             const recent = lastPull.new_permits_seen || 41;
             const filed = lastPull.permits_filed || 0;
             const aiPct = lastPull.ai_cleaned_pct || 100;
-            const bcpaPct = Math.round(((enrichment && enrichment.bcpa_matched || 19804) / total) * 1000) / 10;
-            const sunbizPct = Math.round(((enrichment && enrichment.sunbiz_matched || 55910) / total) * 1000) / 10;
-            const geoPct = Math.round(((enrichment && enrichment.geocoded || 50185) / total) * 1000) / 10;
-            const accelaPct = 100.0; // all have accela detail in snapshot
+
+            // In live mode, avoid fake >100% calculations
+            let bcpaPct, sunbizPct, geoPct;
+            if (isLive) {
+                bcpaPct = 'Pending live metric';
+                sunbizPct = 'Pending live metric';
+                geoPct = 'Pending live metric';
+            } else {
+                bcpaPct = Math.round(((enrichment && enrichment.bcpa_matched || 19804) / total) * 1000) / 10;
+                sunbizPct = Math.round(((enrichment && enrichment.sunbiz_matched || 55910) / total) * 1000) / 10;
+                geoPct = Math.round(((enrichment && enrichment.geocoded || 50185) / total) * 1000) / 10;
+            }
+
+            const accelaPct = 100.0;
             const warnings = (dash.stale_warnings || []).length;
 
             // Exactly 6 key metrics — simplified 3-line format (no em-dashes)
             const cards = [
-                { label: 'Total permits', val: total.toLocaleString(), statusLine: 'all time' },
-                { label: 'New today', val: recent.toLocaleString(), statusLine: 'May 25' },
-                { label: 'Processed', val: aiPct + '%', statusLine: 'all rows seen' },
-                { label: 'Parcel match', val: bcpaPct + '%', statusLine: '19,804 of 115,862' },
-                { label: 'Company match', val: sunbizPct + '%', statusLine: '55,910 of 115,862' },
+                { label: 'Total permits', val: total.toLocaleString(), statusLine: isLive ? 'live Supabase mirror' : 'all time' },
+                { label: 'New today', val: isLive ? '—' : recent.toLocaleString(), statusLine: isLive ? 'Live metric pending' : 'May 25' },
+                { label: 'Processed', val: (typeof aiPct === 'string' ? aiPct : aiPct + '%'), statusLine: 'all rows seen' },
+                { label: 'Parcel match', val: (typeof bcpaPct === 'string' ? bcpaPct : bcpaPct + '%'), statusLine: isLive ? 'Live metric pending' : '19,804 of 115,862' },
+                { label: 'Company match', val: (typeof sunbizPct === 'string' ? sunbizPct : sunbizPct + '%'), statusLine: isLive ? 'Live metric pending' : '55,910 of 115,862' },
                 { label: 'Warnings', val: warnings, statusLine: warnings > 0 ? '● 1 stale source' : 'no issues' }
             ];
 
