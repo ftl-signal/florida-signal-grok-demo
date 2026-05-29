@@ -190,7 +190,7 @@
                     fetch('data/enrichment_stats.json').then(r => r.json()).catch(() => ({}))
                 ]);
 
-                const permits = (permitsResponse && permitsResponse.data) ? permitsResponse.data : permitsResponse;
+                const permits = (permitsResponse && permitsResponse.rows) ? permitsResponse.rows : (permitsResponse && permitsResponse.data) ? permitsResponse.data : permitsResponse;
 
                 window.dashboardSummary = dashboardSummary;
                 dashboardSummaryData = dashboardSummary;
