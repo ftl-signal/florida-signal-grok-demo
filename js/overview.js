@@ -90,27 +90,56 @@
                            window.__FL_SIGNAL_LIVE_DATA === true;
 
             if (isLive) {
-                // Live mode: do not show any fake May 25 / 5 min ago timestamps
+                const liveSum = window.liveOverviewSummary && window.liveOverviewSummary.mode === 'live' ? window.liveOverviewSummary : null;
+
+                let newCount = '—';
+                let newLabel = 'Latest live batch pending';
+                let metricsHtml = `
+                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Processed</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                `;
+
+                if (liveSum) {
+                    if (liveSum.permits_over_700k != null) {
+                        newCount = liveSum.permits_over_700k.toLocaleString();
+                        newLabel = '≥ $700k live';
+                    } else if (liveSum.latest_last_seen_at) {
+                        newCount = 'Recent';
+                        newLabel = 'see header for last seen';
+                    }
+
+                    const p = liveSum.address_coverage_pct != null ? liveSum.address_coverage_pct + '%' : (liveSum.missing_address_count != null ? 'Missing ' + liveSum.missing_address_count.toLocaleString() : 'Pending');
+                    const b = liveSum.source_coverage && liveSum.source_coverage.bcpa != null ? liveSum.source_coverage.bcpa + '%' : 'Pending';
+                    const s = liveSum.source_coverage && liveSum.source_coverage.sunbiz != null ? liveSum.source_coverage.sunbiz + '%' : 'Pending';
+
+                    metricsHtml = `
+                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">High-value</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${liveSum.permits_over_700k != null ? liveSum.permits_over_700k.toLocaleString() : '—'}</div></div>
+                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${b}</div></div>
+                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${s}</div></div>
+                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${p}</div></div>
+                        <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">Live</div></div>
+                    `;
+                }
+
                 const htmlLive = `
                     <div>
                         <div class="latest-intake-top-band" style="display:flex; align-items:flex-end; gap:28px; margin-bottom:8px;">
                             <div style="flex-shrink:0;">
-                                <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">—</span>
-                                <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">new permits</span>
+                                <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">${newCount}</span>
+                                <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">new / high-value</span>
                             </div>
                             <div style="line-height:1.1; padding-bottom:4px; flex-shrink:0;">
-                                <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LATEST PULL</div>
-                                <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">Live intake metric pending</div>
+                                <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LATEST LIVE</div>
+                                <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">${newLabel}</div>
                             </div>
                             <div class="latest-intake-metrics" style="display:flex; gap:20px; margin-left:auto; padding-bottom:6px;">
-                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Processed</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
-                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                                ${metricsHtml}
                             </div>
                         </div>
-                        <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror — real intake metrics will appear after sync pipeline is wired.</div>
+                        <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror — some metrics remain pending until richer sync is wired.</div>
                     </div>`;
                 el.innerHTML = htmlLive;
                 return;
@@ -362,29 +391,64 @@ function toggleEditionDropdown() {
             const filed = lastPull.permits_filed || 0;
             const aiPct = lastPull.ai_cleaned_pct || 100;
 
-            // In live mode, avoid fake >100% calculations
-            let bcpaPct, sunbizPct, geoPct;
-            if (isLive) {
-                bcpaPct = 'Pending live metric';
-                sunbizPct = 'Pending live metric';
-                geoPct = 'Pending live metric';
+            // Live summary from dedicated endpoint (preferred over local/demo data)
+            const liveSum = (isLive && window.liveOverviewSummary && window.liveOverviewSummary.mode === 'live') ? window.liveOverviewSummary : null;
+
+            let liveTotal = total;
+            let newTodayVal = isLive ? '—' : recent.toLocaleString();
+            let newTodayLine = isLive ? 'Live metric pending' : 'May 25';
+            let parcelVal = 'Pending live metric';
+            let companyVal = 'Pending live metric';
+            let addressVal = 'Pending live metric';
+
+            if (liveSum) {
+                liveTotal = liveSum.total_permits || total;
+                if (liveSum.latest_last_seen_at) {
+                    newTodayVal = 'See header';
+                    newTodayLine = 'based on last live seen';
+                }
+                const over700k = liveSum.permits_over_700k;
+                if (over700k != null) {
+                    // Show high-value count instead of generic "New today" when available
+                    newTodayVal = over700k.toLocaleString();
+                    newTodayLine = '≥ $700k (live)';
+                }
+
+                if (liveSum.address_coverage_pct != null) {
+                    addressVal = liveSum.address_coverage_pct + '%';
+                } else if (liveSum.missing_address_count != null) {
+                    addressVal = 'Missing: ' + liveSum.missing_address_count.toLocaleString();
+                }
+
+                if (liveSum.source_coverage) {
+                    const sc = liveSum.source_coverage;
+                    parcelVal = sc.bcpa != null ? sc.bcpa + '%' : 'Pending';
+                    companyVal = sc.sunbiz != null ? sc.sunbiz + '%' : 'Pending';
+                }
+            } else if (isLive) {
+                // No summary yet or partial failure → clear pending labels (no scattered dashes)
+                newTodayVal = 'Live metric pending';
+                newTodayLine = '';
+                parcelVal = 'Live metric pending';
+                companyVal = 'Live metric pending';
+                addressVal = 'Live metric pending';
             } else {
-                bcpaPct = Math.round(((enrichment && enrichment.bcpa_matched || 19804) / total) * 1000) / 10;
-                sunbizPct = Math.round(((enrichment && enrichment.sunbiz_matched || 55910) / total) * 1000) / 10;
-                geoPct = Math.round(((enrichment && enrichment.geocoded || 50185) / total) * 1000) / 10;
+                parcelVal = Math.round(((enrichment && enrichment.bcpa_matched || 19804) / total) * 1000) / 10 + '%';
+                companyVal = Math.round(((enrichment && enrichment.sunbiz_matched || 55910) / total) * 1000) / 10 + '%';
+                addressVal = Math.round(((enrichment && enrichment.geocoded || 50185) / total) * 1000) / 10 + '%';
             }
 
             const accelaPct = 100.0;
             const warnings = (dash.stale_warnings || []).length;
 
-            // Exactly 6 key metrics — simplified 3-line format (no em-dashes)
+            // Exactly 6 key metrics — live uses real summary or clear "pending" labels
             const cards = [
-                { label: 'Total permits', val: total.toLocaleString(), statusLine: isLive ? 'live Supabase mirror' : 'all time' },
-                { label: 'New today', val: isLive ? '—' : recent.toLocaleString(), statusLine: isLive ? 'Live metric pending' : 'May 25' },
+                { label: 'Total permits', val: liveTotal.toLocaleString(), statusLine: isLive ? 'live Supabase mirror' : 'all time' },
+                { label: 'High-value / Recent', val: newTodayVal, statusLine: newTodayLine },
                 { label: 'Processed', val: (typeof aiPct === 'string' ? aiPct : aiPct + '%'), statusLine: 'all rows seen' },
-                { label: 'Parcel match', val: (typeof bcpaPct === 'string' ? bcpaPct : bcpaPct + '%'), statusLine: isLive ? 'Live metric pending' : '19,804 of 115,862' },
-                { label: 'Company match', val: (typeof sunbizPct === 'string' ? sunbizPct : sunbizPct + '%'), statusLine: isLive ? 'Live metric pending' : '55,910 of 115,862' },
-                { label: 'Warnings', val: warnings, statusLine: warnings > 0 ? '● 1 stale source' : 'no issues' }
+                { label: 'Parcel / BCPA', val: parcelVal, statusLine: isLive ? '' : '19,804 of 115,862' },
+                { label: 'Company / Sunbiz', val: companyVal, statusLine: isLive ? '' : '55,910 of 115,862' },
+                { label: 'Address coverage', val: addressVal, statusLine: isLive ? (liveSum && liveSum.missing_address_count != null ? 'live count' : '') : 'geocoded sample' }
             ];
 
             c.innerHTML = cards.map(card => `
@@ -398,7 +462,14 @@ function toggleEditionDropdown() {
 
         function renderTimeWindowsOnOverview(windows) {
             const container = document.getElementById('overview-time-windows');
-            if (!container || !windows || !windows.length) return;
+            if (!container) return;
+
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
+            if (isLive) {
+                container.innerHTML = `<div class="text-xs text-amber-400 p-3">Live completeness / time windows pending — richer sync not yet wired.</div>`;
+                return;
+            }
+            if (!windows || !windows.length) return;
             container.innerHTML = windows.map(w => `
                 <div class="time-window-card bg-slate-900 border border-slate-700 rounded-3xl p-5">
                     <div class="font-semibold text-base mb-3">${w.window}</div>

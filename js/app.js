@@ -240,12 +240,30 @@
                     }
                 }
 
+                // === LIVE OVERVIEW SUMMARY (new dedicated endpoint for truthful metrics) ===
+                if (isLiveNow) {
+                    try {
+                        const sumRes = await fetch('/api/overview-summary?livePermits=1');
+                        if (sumRes.ok) {
+                            window.liveOverviewSummary = await sumRes.json();
+                        }
+                    } catch (e) {
+                        window.liveOverviewSummary = null;
+                    }
+                    // Re-render key live overview sections now that real summary is available
+                    if (window.liveOverviewSummary) {
+                        safeRender('renderMissionControlCards', () => renderMissionControlCards(dashboardSummary, timeWindows, enrichmentStats));
+                        safeRender('renderLatestIntakeBatch', () => renderLatestIntakeBatch(timeWindows, dashboardSummary));
+                    }
+                }
+
                 // === LIVE MODE METRIC OVERRIDES (Phase 2E) ===
                 const isLiveForMetrics = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
                 if (isLiveForMetrics) {
-                    // Use real total from Supabase (hardcoded safe value for now; future: fetch count)
+                    const liveSum = window.liveOverviewSummary;
+                    const liveTotal = liveSum && liveSum.total_permits ? liveSum.total_permits : 116517;
                     if (dashboardSummary && dashboardSummary.metrics && dashboardSummary.metrics.total_permits) {
-                        dashboardSummary.metrics.total_permits.value = 116517;
+                        dashboardSummary.metrics.total_permits.value = liveTotal;
                     }
 
                     // Sanitize time windows to remove fake "New today" and impossible % 
