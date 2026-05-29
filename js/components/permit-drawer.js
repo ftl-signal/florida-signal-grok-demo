@@ -70,8 +70,19 @@
 
                         <div>
                             <div class="text-xs text-slate-400 mb-1">OWNER</div>
-                            <div class="font-medium">${p.owner_name || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('owner_name', p.owner_name, p)}</div>
-                            ${isLiveModeForDrawer() && !p.owner_name ? '<div class="text-[10px] text-amber-400 mt-0.5">Not included in current live contract (owner resolution pending in mirror)</div>' : ''}
+                            ${isLiveModeForDrawer() && p.owner_resolution && p.owner_resolution.resolved_owner_name ? `
+                                <div class="font-medium">${p.owner_resolution.resolved_owner_name} 
+                                    <span class="text-[10px] text-teal-400">[Reviewed owner resolution]</span>
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">
+                                    Source: ${p.owner_resolution.resolved_owner_source || '—'} 
+                                    • Confidence: ${p.owner_resolution.confidence || '—'}
+                                    ${p.owner_resolution.resolved_at ? ' • ' + formatDate(p.owner_resolution.resolved_at) : ''}
+                                </div>
+                            ` : `
+                                <div class="font-medium">${p.owner_name || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('owner_name', p.owner_name, p)}</div>
+                                ${isLiveModeForDrawer() ? '<div class="text-[10px] text-amber-400 mt-0.5">Not included in current live contract (owner resolution pending in mirror)</div>' : ''}
+                            `}
                         </div>
                         <div>
                             <div class="text-xs text-slate-400 mb-1">CONTRACTOR</div>

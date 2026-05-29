@@ -100,16 +100,49 @@ export default async function handler(req, res) {
 
     const permit = rows[0];
 
+    // Fetch safe owner_resolution summary if present (Phase 3D)
+    let owner_resolution = null;
+    try {
+      const orParams = new URLSearchParams({
+        select: 'resolved_owner_name,confidence,resolved_owner_source,resolved_at',
+        permit_number: `eq.${permitNumber}`,
+        limit: '1'
+      });
+      const orUrl = `${supabaseUrl}/rest/v1/owner_resolution?${orParams}`;
+      const orResp = await fetch(orUrl, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (orResp.ok) {
+        const orRows = await orResp.json();
+        if (orRows && orRows.length > 0) {
+          const o = orRows[0];
+          owner_resolution = {
+            resolved_owner_name: o.resolved_owner_name || null,
+            confidence: o.confidence || null,
+            resolved_owner_source: o.resolved_owner_source || null,
+            resolved_at: o.resolved_at || null,
+          };
+        }
+      }
+    } catch (e) {
+      // ignore, owner_resolution will remain null
+    }
+
     // Return only safe shape + honest missing labels
     return res.status(200).json({
       mode: 'live',
       permit: {
         ...permit,
-        // Explicitly mark fields we intentionally do not have yet
-        owner_name: permit.owner_name || null, // will be null or limited in current mirror
-        contractor_name: permit.contractor_name || null,
-        parcel_id: permit.parcel_id || null,
-        // Future: accela_summary, bcpa_summary, owner_resolution_summary can be added here
+        // Explicitly mark fields we intentionally do not expose
+        owner_name: null,
+        contractor_name: null,
+        parcel_id: null,
+        // Safe owner resolution summary (Phase 3D) - only when reviewed row exists
+        owner_resolution: owner_resolution,
       }
     });
   } catch (err) {
