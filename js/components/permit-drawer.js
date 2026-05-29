@@ -2,6 +2,13 @@
         let currentDrawerPermit = null;
         let currentDrawerTab = 'overview';
 
+        function isLiveModeForDrawer() {
+            try {
+                return (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                       window.__FL_SIGNAL_LIVE_DATA === true;
+            } catch (e) { return false; }
+        }
+
         function switchDrawerTab(tab) {
             currentDrawerTab = tab;
             document.querySelectorAll('#drawer-tabs .drawer-tab').forEach(el => {
@@ -26,12 +33,17 @@
             if (currentDrawerTab === 'overview') {
                 html = `
                     <div class="space-y-5">
+                        ${isLiveModeForDrawer() ? `
+                            <div class="text-[10px] bg-blue-950 border border-blue-800 text-blue-300 px-3 py-1 rounded text-center">
+                                Read-only Supabase mirror • Not the full Mac source-of-truth case file yet
+                            </div>
+                        ` : ''}
                         <div>
                             <div class="text-teal-400 text-xs tracking-widest">PERMIT</div>
                             <div class="font-mono text-3xl font-semibold tracking-[-1.5px] mt-0.5">${p.permit_number}</div>
                             <div class="text-xs text-teal-400 mt-0.5">${(() => { const d=decodePermitCode(p.permit_number); return d.display + ' <span class="text-[10px] opacity-70">['+d.confidence+']</span>'; })()}</div>
                             <div class="flex gap-2 mt-1 items-center">
-                                <span class="status-badge ${getStatusColor(p.status)}">${p.status || 'UNKNOWN'}</span>
+                                <span class="status-badge ${getStatusColor(p.status)}">${p.status || (isLiveModeForDrawer() ? 'Not available' : 'UNKNOWN')}</span>
                                 <span class="text-xs text-slate-400">Applied ${p.applied_date || '—'} • Issued ${p.issued_date || '—'}</span>
                             </div>
                             <div class="text-lg mt-2">${p.address || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('address', p.address, p)}</div>
@@ -41,7 +53,14 @@
                             <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4">
                                 <div class="text-xs text-slate-400">VALUATION</div>
                                 <div class="text-2xl font-semibold">${val}</div>
-                                ${(() => { const t = getValuationTier(p.valuation); return t.label !== 'MISSING' ? `<div class="text-xs ${t.cls} mt-0.5">${t.label}</div>` : '<div class="text-xs text-red-400 mt-0.5">MISSING IN CURRENT ROW — no valuation in row</div>'; })()}
+                                ${(() => { 
+                                    const t = getValuationTier(p.valuation); 
+                                    if (t.label !== 'MISSING') return `<div class="text-xs ${t.cls} mt-0.5">${t.label}</div>`;
+                                    const live = isLiveModeForDrawer();
+                                    return live 
+                                        ? '<div class="text-xs text-amber-400 mt-0.5">Not yet mirrored</div>' 
+                                        : '<div class="text-xs text-red-400 mt-0.5">MISSING IN CURRENT ROW — no valuation in row</div>'; 
+                                })()}
                             </div>
                             <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4">
                                 <div class="text-xs text-slate-400">PARCEL</div>
@@ -52,11 +71,13 @@
                         <div>
                             <div class="text-xs text-slate-400 mb-1">OWNER</div>
                             <div class="font-medium">${p.owner_name || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('owner_name', p.owner_name, p)}</div>
+                            ${isLiveModeForDrawer() && !p.owner_name ? '<div class="text-[10px] text-amber-400 mt-0.5">Not included in current live contract (owner resolution pending in mirror)</div>' : ''}
                         </div>
                         <div>
                             <div class="text-xs text-slate-400 mb-1">CONTRACTOR</div>
                             <div class="font-medium">${p.contractor_name || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('contractor_name', p.contractor_name, p)}</div>
                             <div class="text-xs text-slate-400">${p.applicant_name || ''}</div>
+                            ${isLiveModeForDrawer() && !p.contractor_name ? '<div class="text-[10px] text-amber-400 mt-0.5">Not included in current live contract</div>' : ''}
                         </div>
 
                         <!-- PRIMARY CTA: Open Full Case File (prominent, top half) -->
@@ -72,15 +93,25 @@
                         </div>
 
                         <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs">
-                            <div class="text-teal-400 mb-1">GAPS (see precise labels in Full Case File)</div>
-                            ${!p.address ? '• Address (MISSING IN CURRENT ROW)<br>' : ''}
-                            ${!p.parcel_id ? '• Parcel ID<br>' : ''}
-                            ${!p.owner_name ? '• Owner (MISSING IN CURRENT ROW)<br>' : ''}
-                            ${!p.source_bcpa ? '• BCPA enrichment (MISSING IN CURRENT ROW)<br>' : ''}
-                            ${!p.source_sunbiz ? '• Sunbiz enrichment (MISSING IN CURRENT ROW)<br>' : ''}
-                            ${(!p.lat || !p.lon) ? '• Geocode (lat/lon) — STALE per dashboard_summary<br>' : ''}
+                            <div class="text-teal-400 mb-1">
+                                ${isLiveModeForDrawer() ? 'MIRROR GAPS' : 'GAPS (see precise labels in Full Case File)'}
+                            </div>
+                            ${isLiveModeForDrawer() ? `
+                                ${!p.address ? '• Address — Not yet mirrored<br>' : ''}
+                                ${!p.parcel_id ? '• Parcel ID — Not included in current live contract<br>' : ''}
+                                ${!p.owner_name ? '• Owner — Not included in current live contract<br>' : ''}
+                                ${!p.source_bcpa ? '• BCPA enrichment — Not yet mirrored<br>' : ''}
+                                ${!p.source_sunbiz ? '• Sunbiz enrichment — Not yet mirrored<br>' : ''}
+                                ${(!p.lat || !p.lon) ? '• Geocode (lat/lon) — Not yet mirrored<br>' : ''}
+                            ` : `
+                                ${!p.address ? '• Address (MISSING IN CURRENT ROW)<br>' : ''}
+                                ${!p.parcel_id ? '• Parcel ID<br>' : ''}
+                                ${!p.owner_name ? '• Owner (MISSING IN CURRENT ROW)<br>' : ''}
+                                ${!p.source_bcpa ? '• BCPA enrichment (MISSING IN CURRENT ROW)<br>' : ''}
+                                ${!p.source_sunbiz ? '• Sunbiz enrichment (MISSING IN CURRENT ROW)<br>' : ''}
+                                ${(!p.lat || !p.lon) ? '• Geocode (lat/lon) — STALE per dashboard_summary<br>' : ''}
+                            `}
                             ${p.last_enriched_at ? '' : '• Last enriched timestamp'}
-                            ${(!p.address && !p.parcel_id && !p.owner_name) ? '<span class="text-red-400">High incompleteness — flag for review</span>' : ''}
                         </div>
 
                         <div class="text-[10px] text-slate-400 border-l-2 border-slate-700 pl-2">
@@ -96,8 +127,12 @@
                             <div class="flex flex-wrap gap-2">${provBadges.length ? provBadges.map(b => `<span class="px-3 py-1 bg-slate-800 rounded-2xl text-xs">${b}</span>`).join('') : '<span class="text-slate-500">No source timestamps present for this record</span>'}</div>
                         </div>
                         <div class="text-xs bg-slate-950 border border-slate-700 rounded-2xl p-4">
-                            <div>Last enriched: <span class="font-mono">${p.last_enriched_at || 'UNKNOWN'}</span></div>
-                            <div class="mt-2 text-amber-400">Note: These are the enrichment fetch times recorded in the snapshot. Geocode cache is known STALE (2026-05-05).</div>
+                            <div>Last enriched: <span class="font-mono">${p.last_enriched_at || (isLiveModeForDrawer() ? 'Not yet mirrored' : 'UNKNOWN')}</span></div>
+                            <div class="mt-2 text-amber-400">
+                                ${isLiveModeForDrawer() 
+                                    ? 'Note: Timestamps from the live Supabase read-only mirror. Some enrichment data may still be pending.'
+                                    : 'Note: These are the enrichment fetch times recorded in the snapshot. Geocode cache is known STALE (2026-05-05).'}
+                            </div>
                         </div>
                         <div>
                             <div class="text-xs text-slate-400">Source confidence (heuristic for this sandbox sample)</div>
@@ -123,16 +158,26 @@
                             </button>
                             <div class="text-center text-[10px] text-teal-400/80 mt-1.5">Rich source depth • 9 tabs • old Claude field inventory</div>
                         </div>
-                        <div class="text-[10px] text-amber-400/80">All exports include the manifest fields defined in the Reports tab. No production systems are called.</div>
+                        <div class="text-[10px] text-amber-400/80">
+                            ${isLiveModeForDrawer() 
+                                ? 'Exports use live mirror data where available. Some fields remain limited in the current Supabase contract.'
+                                : 'All exports include the manifest fields defined in the Reports tab. No production systems are called.'}
+                        </div>
                     </div>
                 `;
             } else if (currentDrawerTab === 'notes') {
                 html = `
                     <div class="space-y-4 text-sm">
                         <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4">
-                            <div class="text-teal-400 text-xs mb-2">AI / OPERATOR NOTES (sandbox scaffolding)</div>
+                            <div class="text-teal-400 text-xs mb-2">
+                                ${isLiveModeForDrawer() ? 'AI / OPERATOR NOTES (live mirror)' : 'AI / OPERATOR NOTES (sandbox scaffolding)'}
+                            </div>
                             <div class="text-slate-300">This permit ${p.address ? 'has a usable address' : 'is missing address — high priority for cleanup'} and ${p.source_bcpa ? 'has BCPA match' : 'lacks BCPA match'}.</div>
-                            <div class="mt-3 text-xs text-slate-400">Future: This area will hold Grok-generated risk notes or operator annotations once the packet export + scoring workflow is live.</div>
+                            <div class="mt-3 text-xs text-slate-400">
+                                ${isLiveModeForDrawer() 
+                                    ? 'Note: This is a read-only Supabase mirror. Full case file depth is limited until more enrichment is mirrored.'
+                                    : 'Future: This area will hold Grok-generated risk notes or operator annotations once the packet export + scoring workflow is live.'}
+                            </div>
                         </div>
                         <div class="text-[10px]">Packet-ready fields are complete in the JSON preview. Use the Export tab to generate the exact packet the future scoring run will consume.</div>
                     </div>
@@ -242,14 +287,14 @@
             const lines = [
                 `## Permit ${p.permit_number}`,
                 '',
-                `**Status:** ${p.status || 'UNKNOWN'}`,
+                `**Status:** ${p.status || (isLiveModeForDrawer() ? 'Not available' : 'UNKNOWN')}`,
                 `**Address:** ${p.address || 'MISSING / UNKNOWN'}`,
                 `**Applied / Issued:** ${p.applied_date || '—'} / ${p.issued_date || '—'}`,
                 `**Valuation:** ${val}`,
                 '',
-                `**Parcel:** ${p.parcel_id || 'MISSING / UNKNOWN'}`,
-                `**Owner:** ${p.owner_name || 'MISSING / UNKNOWN'}`,
-                `**Contractor:** ${p.contractor_name || 'MISSING / UNKNOWN'}${p.applicant_name ? ' (Applicant: ' + p.applicant_name + ')' : ''}`,
+                `**Parcel:** ${p.parcel_id || (isLiveModeForDrawer() ? 'Not included in current live contract' : 'MISSING / UNKNOWN')}`,
+                `**Owner:** ${p.owner_name || (isLiveModeForDrawer() ? 'Not included in current live contract' : 'MISSING / UNKNOWN')}`,
+                `**Contractor:** ${p.contractor_name || (isLiveModeForDrawer() ? 'Not included in current live contract' : 'MISSING / UNKNOWN')}${p.applicant_name ? ' (Applicant: ' + p.applicant_name + ')' : ''}`,
                 '',
                 '### Provenance',
                 `- Accela: ${p.source_accela ? formatDate(p.source_accela) : 'MISSING'}`,
@@ -264,7 +309,9 @@
                 p.source_sunbiz ? '' : '- No Sunbiz match',
                 (p.lat && p.lon) ? '' : '- No geocode (or stale)',
                 '',
-                '_Generated from sandbox READONLY snapshot via florida-signal-grok-lab cockpit. Not live intelligence._'
+                isLiveModeForDrawer() 
+                    ? '_Generated from live read-only Supabase mirror. Not the full source-of-truth case file._'
+                    : '_Generated from sandbox READONLY snapshot via florida-signal-grok-lab cockpit. Not live intelligence._'
             ].filter(Boolean).join('\n');
 
             navigator.clipboard.writeText(lines).then(() => {
