@@ -53,7 +53,7 @@ async function getPermits(params = {}) {
       query.set('minValuation', String(params.minValuation));
     }
 
-    const res = await fetch(`/api/permits?${query.toString()}`);
+    const res = await fetch(`/api/permits?${query.toString()}`, { credentials: 'include' });
     if (!res.ok) throw new Error('API request failed');
 
     return await res.json();

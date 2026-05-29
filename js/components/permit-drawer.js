@@ -236,9 +236,7 @@
             currentDrawerTab = 'overview';
 
             // Phase 3A: If in live mode, fetch richer detail from server
-            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
-                           window.__FL_SIGNAL_LIVE_DATA === true;
-
+            // (reuses the isLive const declared above to avoid duplicate declaration crash)
             if (isLive && permit && permit.permit_number) {
                 fetchLivePermitDetail(permit.permit_number).then(detail => {
                     if (detail && detail.permit) {
@@ -287,7 +285,7 @@
 
         async function fetchLivePermitDetail(permitNumber) {
             try {
-                const res = await fetch(`/api/permit-detail?permit_number=${encodeURIComponent(permitNumber)}&livePermits=1`);
+                const res = await fetch(`/api/permit-detail?permit_number=${encodeURIComponent(permitNumber)}&livePermits=1`, { credentials: 'include' });
                 if (!res.ok) return null;
                 return await res.json();
             } catch (e) {

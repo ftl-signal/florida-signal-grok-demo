@@ -8,7 +8,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 8; // 8 hours
 export default function handler(req, res) {
   // Logout
   if (req.method === 'DELETE') {
-    res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`);
+    res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
     return res.status(200).json({ ok: true });
   }
 
@@ -31,7 +31,7 @@ export default function handler(req, res) {
   const token = Buffer.from(expected).toString('base64');
   res.setHeader(
     'Set-Cookie',
-    `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Strict`
+    `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax`
   );
   return res.status(200).json({ ok: true });
 }

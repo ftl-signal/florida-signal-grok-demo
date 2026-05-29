@@ -243,7 +243,7 @@
                 // === LIVE OVERVIEW SUMMARY (new dedicated endpoint for truthful metrics) ===
                 if (isLiveNow) {
                     try {
-                        const sumRes = await fetch('/api/overview-summary?livePermits=1');
+                        const sumRes = await fetch('/api/overview-summary?livePermits=1', { credentials: 'include' });
                         if (sumRes.ok) {
                             window.liveOverviewSummary = await sumRes.json();
                         }

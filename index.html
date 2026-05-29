@@ -100,7 +100,7 @@
 
   // Check if already authenticated: try a probe fetch
   function probe() {
-    fetch('/api/permits?livePermits=1&limit=1')
+    fetch('/api/permits?livePermits=1&limit=1', { credentials: 'include' })
       .then(function (r) {
         if (r.status === 401) { overlay.classList.add('visible'); }
         // 200 or 5xx from upstream = cookie valid, let dashboard load
@@ -117,6 +117,7 @@
     errEl.textContent = '';
     fetch('/api/auth', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw }),
     })
@@ -154,7 +155,7 @@
       'cursor:pointer', 'font-family:inherit'
     ].join(';');
     btn.addEventListener('click', function() {
-      fetch('/api/auth', { method: 'DELETE' }).then(function() {
+      fetch('/api/auth', { method: 'DELETE', credentials: 'include' }).then(function() {
         location.reload();
       });
     });
