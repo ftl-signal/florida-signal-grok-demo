@@ -49,6 +49,23 @@
                             <div class="text-lg mt-2">${p.address || '<span class="text-amber-400">—</span>'} ${preciseStatusPill('address', p.address, p)}</div>
                         </div>
 
+                        ${isLiveModeForDrawer() && (p.description || p.work_type || p.basic_status || p.applicant_name) ? `
+                          <div class="bg-slate-950 border border-slate-700 rounded-2xl p-3 text-xs">
+                            <div class="text-teal-400 mb-1 text-[10px] tracking-widest">CASE DETAILS (live mirror)</div>
+                            ${p.description ? `<div class="text-slate-200 mb-1 leading-snug">${p.description}</div>` : ''}
+                            <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-slate-400">
+                              ${p.work_type ? `<span>Work: <span class="text-slate-300">${p.work_type}</span></span>` : ''}
+                              ${p.basic_status ? `<span>Status: <span class="text-slate-300">${p.basic_status}</span></span>` : ''}
+                              ${p.applicant_name ? `<span>Applicant: <span class="text-slate-300">${p.applicant_name}</span></span>` : ''}
+                            </div>
+                            ${p.opened_date || p.finalized_date ? `
+                              <div class="mt-1 text-[10px] text-slate-500">
+                                ${p.opened_date ? `Opened ${p.opened_date}` : ''}${p.opened_date && p.finalized_date ? ' • ' : ''}${p.finalized_date ? `Finalized ${p.finalized_date}` : ''}
+                              </div>
+                            ` : ''}
+                          </div>
+                        ` : ''}
+
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4">
                                 <div class="text-xs text-slate-400">VALUATION</div>
@@ -110,10 +127,11 @@
                             ${isLiveModeForDrawer() ? `
                                 ${!p.address ? '• Address — Not yet mirrored<br>' : ''}
                                 ${!p.parcel_id ? '• Parcel ID — Not included in current live contract<br>' : ''}
-                                ${!p.owner_name ? '• Owner — Not included in current live contract<br>' : ''}
-                                ${!p.source_bcpa ? '• BCPA enrichment — Not yet mirrored<br>' : ''}
+                                ${!p.owner_name ? '• Owner — Not included in current live contract (owner resolution pending in mirror)<br>' : ''}
+                                ${!p.source_bcpa ? '• BCPA economics (just_value, year_built, etc.) — Not yet mirrored<br>' : ''}
                                 ${!p.source_sunbiz ? '• Sunbiz enrichment — Not yet mirrored<br>' : ''}
                                 ${(!p.lat || !p.lon) ? '• Geocode (lat/lon) — Not yet mirrored<br>' : ''}
+                                <div class="text-[9px] text-slate-500 mt-0.5">Core Accela fields (description, work type, applicant) now flow when present in the mirror.</div>
                             ` : `
                                 ${!p.address ? '• Address (MISSING IN CURRENT ROW)<br>' : ''}
                                 ${!p.parcel_id ? '• Parcel ID<br>' : ''}

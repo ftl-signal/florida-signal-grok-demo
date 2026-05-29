@@ -121,9 +121,32 @@
         }
         // ===== end precise field status =====
 
+        function isLiveMode() {
+            try {
+                return (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                       window.__FL_SIGNAL_LIVE_DATA === true;
+            } catch (e) { return false; }
+        }
+
         function preciseStatusPill(fieldKey, rawValue, p) {
             const label = getPreciseFieldStatus(fieldKey, rawValue, p);
             if (label === 'PRESENT') return ''; // reduce visual noise on normal visible values
+
+            const live = isLiveMode();
+
+            let displayLabel = label;
+
+            if (live) {
+                // In live mode, use clearer, honest labels instead of generic "MISSING IN CURRENT ROW"
+                if (['owner_name', 'contractor_name', 'parcel_id', 'lat', 'lon', 'raw_json'].some(k => fieldKey.includes(k))) {
+                    displayLabel = 'Not included in current live contract';
+                } else if (label === 'MISSING IN CURRENT ROW' || label === 'UNKNOWN') {
+                    displayLabel = 'Not yet mirrored';
+                } else if (label === 'NOT IN SAMPLE' || label === 'PLANNED SOURCE') {
+                    displayLabel = 'Not available in current live mirror';
+                }
+            }
+
             const clsMap = {
                 'MISSING IN CURRENT ROW': 'text-red-400',
                 'NOT IN SAMPLE': 'text-amber-400',
@@ -131,10 +154,13 @@
                 'PLANNED SOURCE': 'text-sky-400',
                 STUB: 'text-amber-400',
                 STALE: 'text-orange-400',
-                UNKNOWN: 'text-slate-400'
+                UNKNOWN: 'text-slate-400',
+                'Not included in current live contract': 'text-amber-400',
+                'Not yet mirrored': 'text-amber-400',
+                'Not available in current live mirror': 'text-amber-400'
             };
-            const cls = clsMap[label] || 'text-slate-400';
-            return `<span class="ml-2 text-xs font-bold ${cls}">[${label}]</span>`;
+            const cls = clsMap[displayLabel] || 'text-slate-400';
+            return `<span class="ml-2 text-xs font-bold ${cls}">[${displayLabel}]</span>`;
         }
 
         function showSection(section) {

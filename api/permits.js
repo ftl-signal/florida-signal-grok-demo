@@ -12,7 +12,8 @@ const SAFE_FIELDS = [
   'address', 'address_normalized', 'valuation', 'valuation_usd_clean',
   'permit_category', 'report_source', 'region', 'is_commercial',
   'source_accela', 'source_bcpa', 'source_sunbiz', 'last_enriched_at',
-  'first_seen_at', 'last_seen_at'
+  'first_seen_at', 'last_seen_at',
+  'description', 'work_type', 'basic_status', 'applicant_name', 'opened_date', 'finalized_date'
 ].join(',');
 
 function parseCookies(cookieHeader) {
