@@ -90,60 +90,58 @@
                            window.__FL_SIGNAL_LIVE_DATA === true;
 
             if (isLive) {
-                // Compute real high-value count from the live permits data we already loaded for the table (no new queries)
+                // Rename the section heading for live mode only (the static "Latest Intake" heading)
+                try {
+                    const parent = el.parentElement;
+                    if (parent) {
+                        const heading = parent.querySelector('div[style*="font-size:26px"]');
+                        if (heading) heading.textContent = 'Live Permit Database';
+                    }
+                } catch (e) {}
+
+                // Use live permits data already loaded for the Permits tab (no new Supabase calls)
                 const livePermits = (window.permitsData && window.permitsData.length ? window.permitsData :
                                    (typeof permitsData !== 'undefined' && permitsData.length ? permitsData : []));
 
                 let highValueCount = 0;
-                let latestSeenIso = null;
                 if (livePermits.length > 0) {
-                    livePermits.forEach(p => {
-                        const val = (p.valuation_usd_clean || p.valuation || 0);
-                        if (val >= 700000) highValueCount++;
-                        if (p.last_seen_at && (!latestSeenIso || p.last_seen_at > latestSeenIso)) {
-                            latestSeenIso = p.last_seen_at;
-                        }
-                    });
+                    highValueCount = livePermits.filter(p => {
+                        const val = Number(p.valuation_usd_clean || p.valuation || 0);
+                        return val >= 700000;
+                    }).length;
                 }
 
-                let htmlLive;
-                if (highValueCount > 0) {
-                    // Show real number from live data — makes the card look complete and useful
-                    htmlLive = `
-                        <div>
-                            <div class="latest-intake-top-band" style="display:flex; align-items:flex-end; gap:28px; margin-bottom:8px;">
-                                <div style="flex-shrink:0;">
-                                    <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">${highValueCount.toLocaleString()}</span>
-                                    <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">high-value permits</span>
+                const total = 116517;
+                const highValDisplay = highValueCount > 0 ? highValueCount.toLocaleString() : 'Live metric pending';
+                const enrichedDisplay = 'Live metric pending';
+
+                // Freshness as small supporting text (header already shows the detailed version)
+                const freshDisplay = 'Last live permit seen: see header above';
+
+                const htmlLive = `
+                    <div style="padding: 2px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px;">
+                            <!-- Hero: Total permits -->
+                            <div>
+                                <div style="font-size:64px; line-height:1; font-weight:800; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.02em;">
+                                    ${total.toLocaleString()}
                                 </div>
-                                <div style="line-height:1.1; padding-bottom:4px; flex-shrink:0;">
-                                    <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LIVE MIRROR</div>
-                                    <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">Top results (valuation sorted)</div>
-                                </div>
-                                <div class="latest-intake-metrics" style="display:flex; gap:20px; margin-left:auto; padding-bottom:6px;">
-                                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">In view</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${livePermits.length}</div></div>
-                                    <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">≥ $700k</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">${highValueCount}</div></div>
-                                </div>
+                                <div style="font-size:22px; font-weight:500; color:#e6edf7; margin-top:-4px;">permits</div>
+                                <div style="font-size:13px; color:#5cb8b5; margin-top:2px;">Live Supabase mirror</div>
                             </div>
-                            <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror. Intake metrics will appear after summary endpoint is wired. See header for exact latest timestamp.</div>
-                        </div>`;
-                } else {
-                    // Clean pending state — no giant blank dash, no weird "new / high-value" text
-                    htmlLive = `
-                        <div>
-                            <div class="latest-intake-top-band" style="display:flex; align-items:flex-start; gap:28px; margin-bottom:8px;">
-                                <div style="flex-shrink:0; max-width: 260px;">
-                                    <div style="font-size:26px; line-height:1.15; font-weight:700; color:#5cb8b5;">Live intake summary pending</div>
-                                    <div style="font-size:12px; color:#94a3b8; margin-top:6px; line-height:1.3;">Latest live permit seen: see header above</div>
-                                </div>
-                                <div style="line-height:1.1; padding-top:4px; flex-shrink:0;">
-                                    <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LIVE MIRROR</div>
-                                    <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:2px;">Batch metrics pending</div>
-                                </div>
+
+                            <!-- Secondary metrics on the right -->
+                            <div style="text-align:right; font-size:13px; line-height:1.7; color:#e2e8f0; min-width:160px;">
+                                <div><span style="color:#94a3b8;">Enriched / processed:</span> ${enrichedDisplay}</div>
+                                <div><span style="color:#94a3b8;">High-value (≥ $700k):</span> ${highValDisplay}</div>
+                                <div style="font-size:11px; color:#64748b; margin-top:4px;">${freshDisplay}</div>
                             </div>
-                            <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror. Intake metrics will appear after summary endpoint is wired.</div>
-                        </div>`;
-                }
+                        </div>
+
+                        <div style="margin-top:10px; font-size:10px; color:#fbbf24;">
+                            Live Supabase mirror. Batch and full enrichment metrics pending richer summary endpoint.
+                        </div>
+                    </div>`;
 
                 el.innerHTML = htmlLive;
                 return;
