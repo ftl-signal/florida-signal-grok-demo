@@ -86,6 +86,37 @@
             const latest = timeWindows.find(w => (w.window || '').toLowerCase().includes('pull')) || timeWindows[0];
             const stale = (dash && dash.stale_warnings && dash.stale_warnings.length) ? dash.stale_warnings[0] : null;
 
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                           window.__FL_SIGNAL_LIVE_DATA === true;
+
+            if (isLive) {
+                // Live mode: do not show any fake May 25 / 5 min ago timestamps
+                const htmlLive = `
+                    <div>
+                        <div class="latest-intake-top-band" style="display:flex; align-items:flex-end; gap:28px; margin-bottom:8px;">
+                            <div style="flex-shrink:0;">
+                                <span style="font-size:80px; line-height:1; font-weight:800; color:#5cb8b5; text-shadow:0 0 36px rgba(92,184,181,0.22); letter-spacing:-0.04em; font-family: var(--font-display);">—</span>
+                                <span style="font-size:20px; line-height:1; font-weight:400; color:#e6edf7; margin-left:14px;">new permits</span>
+                            </div>
+                            <div style="line-height:1.1; padding-bottom:4px; flex-shrink:0;">
+                                <div class="uppercase text-[11px] tracking-[0.08em] text-slate-400" style="letter-spacing:0.08em; font-family: var(--font-body);">LATEST PULL</div>
+                                <div style="font-size:14px; font-weight:600; color:#7dd3fc; font-family: var(--font-display); margin-top:1px;">Live intake metric pending</div>
+                            </div>
+                            <div class="latest-intake-metrics" style="display:flex; gap:20px; margin-left:auto; padding-bottom:6px;">
+                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Processed</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Parcel</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Company</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Address</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                                <div style="text-align:center;"><div class="text-xs text-slate-400" style="font-family: var(--font-body);">Full detail</div><div style="font-size:32px; line-height:1; font-weight:600; color:#5cb8b5; font-family: var(--font-display); letter-spacing:-0.01em;">—</div></div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-amber-400 mt-1">Live Supabase mirror — real intake metrics will appear after sync pipeline is wired.</div>
+                    </div>`;
+                el.innerHTML = htmlLive;
+                return;
+            }
+
+            // Demo path (original behavior preserved exactly)
             // Pre-compute ET time for the hero (using a representative time for the sample data)
             const heroPullTime = formatTimeET(new Date('2026-05-25T13:50:00'));
 

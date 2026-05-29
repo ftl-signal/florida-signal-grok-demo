@@ -33,6 +33,26 @@
             const mainEl = document.getElementById('last-updated-main');
             if (!mainEl) return;
 
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                           window.__FL_SIGNAL_LIVE_DATA === true;
+
+            if (isLive) {
+                // Live mode: prefer real max last_seen_at from loaded permits
+                const liveTs = window.__FL_LIVE_LAST_SEEN_AT;
+                if (liveTs) {
+                    try {
+                        const d = new Date(liveTs);
+                        const rel = formatRelativeTime(d);
+                        const abs = formatTimeET(d);
+                        mainEl.innerHTML = `<span style="color:#7dd3fc;">Last live permit seen: ${rel}</span> <span style="color:#8ea3c7;">· ${abs}</span>`;
+                        return;
+                    } catch (e) {}
+                }
+                mainEl.innerHTML = `<span style="color:#7dd3fc;">Live freshness pending</span>`;
+                return;
+            }
+
+            // Demo / fallback (unchanged behavior)
             const LAST_PULL_BASE = new Date('2026-05-28T13:50:00');
             const now = new Date();
             const diffMin = Math.floor((now - LAST_PULL_BASE) / 60000);
@@ -45,4 +65,13 @@
 
             mainEl.innerHTML = `<span style="color:${color};">${icon}${rel}</span>  <span style="color:#8ea3c7;">·  ${abs}</span>`;
         }
+
+        // Called by live data loader after permits arrive so header can show real freshness
+        window.setLiveLastSeenAt = function(isoString) {
+            if (isoString) {
+                window.__FL_LIVE_LAST_SEEN_AT = isoString;
+                // Re-render immediately if function exists
+                if (typeof updateHeaderTimestamp === 'function') updateHeaderTimestamp();
+            }
+        };
 

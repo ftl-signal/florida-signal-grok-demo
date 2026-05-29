@@ -222,6 +222,16 @@
             const content = document.getElementById('permit-modal-content');
             if (!modal || !content) return;
 
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                           window.__FL_SIGNAL_LIVE_DATA === true;
+
+            // Guard: never show DEMO- permit drawer when live mode is active
+            if (isLive && permit && permit.permit_number && String(permit.permit_number).startsWith('DEMO-')) {
+                if (typeof closePermitModal === 'function') closePermitModal();
+                console.warn('[live drawer guard] Blocked attempt to open DEMO- permit in live mode');
+                return;
+            }
+
             currentDrawerPermit = permit;
             currentDrawerTab = 'overview';
 

@@ -226,6 +226,20 @@
                 window.timeWindowsData = timeWindows;
                 window.enrichmentStatsData = enrichmentStats;
 
+                // === LIVE FRESHNESS: expose max last_seen_at so header can show truthful time ===
+                const isLiveNow = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
+                if (isLiveNow && Array.isArray(permits) && permits.length > 0) {
+                    let maxSeen = null;
+                    for (const p of permits) {
+                        if (p.last_seen_at) {
+                            if (!maxSeen || p.last_seen_at > maxSeen) maxSeen = p.last_seen_at;
+                        }
+                    }
+                    if (maxSeen && typeof window.setLiveLastSeenAt === 'function') {
+                        window.setLiveLastSeenAt(maxSeen);
+                    }
+                }
+
                 // === LIVE MODE METRIC OVERRIDES (Phase 2E) ===
                 const isLiveForMetrics = (new URLSearchParams(window.location.search).get('livePermits') === '1') || window.__FL_SIGNAL_LIVE_DATA === true;
                 if (isLiveForMetrics) {
@@ -326,6 +340,9 @@
                 // Permits Explorer (full wiring)
                 safeRender('renderPermitsTable', () => renderPermitsTable(permits));
                 safeRender('updatePermitsCount', () => updatePermitsCount(permits.length, permits.length));
+
+                // Extra hygiene pass after table render (catches late drawer state)
+                setTimeout(fixLiveModeCopy, 120);
 
                 // Signals (FROZEN)
                 safeRender('renderSignals', () => renderSignals(signals));
@@ -593,6 +610,42 @@
             if (search) search.addEventListener('keypress', e => { if (e.key === 'Enter') filterPermitsTable(); });
             updateHeaderTimestamp();
             setInterval(updateHeaderTimestamp, 30000);
+            // Live mode copy + stale drawer hygiene
+            setTimeout(fixLiveModeCopy, 80);
+            setTimeout(fixLiveModeCopy, 600);
         }
 
         window.onload = initDashboard;
+
+        // === Live mode UI hygiene (stale demo copy + drawer cleanup) ===
+        function fixLiveModeCopy() {
+            const isLive = (new URLSearchParams(window.location.search).get('livePermits') === '1') ||
+                           window.__FL_SIGNAL_LIVE_DATA === true;
+            if (!isLive) return;
+
+            // Permits Explorer subtitle (static in HTML)
+            try {
+                const subtitles = document.querySelectorAll('.text-slate-400.text-sm');
+                for (const el of subtitles) {
+                    if (el.textContent && el.textContent.includes('1,000-row sandbox sample')) {
+                        el.textContent = 'Live read-only Supabase mirror · all permits · sorted by valuation (highest first)';
+                        break;
+                    }
+                }
+            } catch (e) {}
+
+            // Clear any open drawer that still has DEMO- data
+            try {
+                const drawer = document.getElementById('permit-drawer');
+                const header = document.getElementById('drawer-header');
+                if (drawer && drawer.classList.contains('open') && header) {
+                    const txt = header.textContent || '';
+                    if (txt.includes('DEMO-')) {
+                        if (typeof closePermitModal === 'function') closePermitModal();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Expose for manual calls if needed
+        window.fixLiveModeCopy = fixLiveModeCopy;
